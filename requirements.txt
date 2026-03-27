@@ -13,3 +13,4 @@ Pillow
 reportlab==4.0.7
 arabic-reshaper==3.0.0
 python-bidi==0.4.2
+gunicorn==23.0.0
