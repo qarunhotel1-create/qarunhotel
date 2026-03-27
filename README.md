@@ -1,6 +1,14 @@
-# QARUN HOTEL
+# QARUN HOTEL 🏨
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=qarunhotel1-create/qarunhotel)
 
 نظام متكامل لإدارة الفنادق مبني باستخدام Python وإطار العمل Flask.
+
+## 🚀 تشغيل النظام أونلاين فوراً (GitHub Codespaces)
+يمكنك تشغيل هذا المشروع بالكامل داخل متصفحك مباشرة عبر GitHub Codespaces دون الحاجة لتثبيت أي شيء على جهازك:
+1. اضغط على زر **Open in GitHub Codespaces** الموجود في الأعلى.
+2. انتظر حتى تكتمل عملية بناء البيئة (سيقوم GitHub بتثبيت كل شيء تلقائياً).
+3. عند الانتهاء، ستظهر لك رسالة تطلب منك فتح الرابط في المتصفح، أو يمكنك تشغيل الأمر `python run.py` في الـ Terminal بالأسفل.
 
 ## الميزات
 
