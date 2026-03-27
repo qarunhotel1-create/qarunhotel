@@ -1,16 +1,18 @@
 # QARUN HOTEL 🏨
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/qarunhotel1-create/qarunhotel)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=qarunhotel1-create/qarunhotel)
 
 نظام متكامل لإدارة الفنادق مبني باستخدام Python وإطار العمل Flask.
 
-## 🚀 تشغيل النظام أونلاين فوراً (GitHub Codespaces)
-يمكنك تشغيل هذا المشروع بالكامل داخل متصفحك مباشرة عبر GitHub Codespaces دون الحاجة لتثبيت أي شيء على جهازك:
-1. اضغط على زر **Open in GitHub Codespaces** الموجود في الأعلى.
-2. انتظر حتى تكتمل عملية بناء البيئة (سيقوم GitHub بتثبيت كل شيء تلقائياً).
-3. عند الانتهاء، ستظهر لك رسالة تطلب منك فتح الرابط في المتصفح، أو يمكنك تشغيل الأمر `python run.py` في الـ Terminal بالأسفل.
+## 🚀 تشغيل النظام أونلاين فوراً (رابط شغال 24 ساعة)
+لتشغيل النظام بالكامل (مع قاعدة البيانات) والحصول على رابط حقيقي، اتبع هذه الخطوة:
+1. اضغط على زر **Deploy to Render** الأزرق في الأعلى.
+2. سيطلب منك تسجيل الدخول (استخدم حساب GitHub الخاص بك).
+3. اضغط على **Create Web Service** وانتظر دقيقتين حتى يكتمل البناء.
+4. ستحصل على رابط نهائي (مثل `qarun-hotel.onrender.com`) يعمل من أي مكان!
 
-## الميزات
+## 🚀 تشغيل النظام للتجربة (GitHub Codespaces)
 
 - **نظام تسجيل الدخول للمستخدمين**:
   - نوعان من المستخدمين: موظف الاستقبال (Admin) والنزلاء (Guests)
