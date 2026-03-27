@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-5 text-gradient fw-bold mb-3">
+            <i class="fas fa-user-shield me-3"></i>تقرير المستخدمين
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">الرئيسية</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">التقارير</a></li>
+                <li class="breadcrumb-item active">تقرير المستخدمين</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- إحصائيات المستخدمين -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6 col-md-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <h3>{{ stats.total_users }}</h3>
+                <p class="mb-0">إجمالي المستخدمين</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>توزيع الأدوار
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for role, count in stats.user_stats %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>
+                        {% if role == 'admin' %}
+                            <i class="fas fa-crown text-danger me-2"></i>مدير النظام
+                        {% elif role == 'manager' %}
+                            <i class="fas fa-user-tie text-warning me-2"></i>مدير عام
+                        {% elif role == 'receptionist' %}
+                            <i class="fas fa-concierge-bell text-info me-2"></i>موظف استقبال
+                        {% elif role == 'accountant' %}
+                            <i class="fas fa-calculator text-success me-2"></i>محاسب
+                        {% elif role == 'guest' %}
+                            <i class="fas fa-user text-secondary me-2"></i>عميل
+                        {% else %}
+                            <i class="fas fa-question text-muted me-2"></i>{{ role }}
+                        {% endif %}
+                    </span>
+                    <span class="badge bg-primary">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول المستخدمين -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>قائمة المستخدمين
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" id="userSearch" class="form-control" placeholder="البحث في المستخدمين...">
+                    </div>
+                    <div class="col-md-6">
+                        <select id="roleFilter" class="form-select">
+                            <option value="">جميع الأدوار</option>
+                            <option value="admin">مدير النظام</option>
+                            <option value="manager">مدير عام</option>
+                            <option value="receptionist">موظف استقبال</option>
+                            <option value="accountant">محاسب</option>
+                            <option value="guest">عميل</option>
+                        </select>
+                    </div>
+                </div>
+                
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>المستخدم</th>
+                                <th>الدور</th>
+                                <th>الصلاحيات</th>
+                                <th>تاريخ التسجيل</th>
+                                <th>النشاط</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-gradient-{{ user.get_role_color() }} text-white rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="{{ user.get_role_icon() }}"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ user.full_name or user.username }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ user.username }} - ID: #{{ user.id }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ user.get_role_color() }}">
+                                        <i class="{{ user.get_role_icon() }} me-1"></i>
+                                        {{ user.get_role_display_name() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% if user.can_manage_users() %}
+                                            <span class="badge bg-danger" title="إدارة المستخدمين">👥</span>
+                                        {% endif %}
+                                        {% if user.can_manage_rooms() %}
+                                            <span class="badge bg-info" title="إدارة الغرف">🏠</span>
+                                        {% endif %}
+                                        {% if user.can_manage_bookings() %}
+                                            <span class="badge bg-primary" title="إدارة الحجوزات">📅</span>
+                                        {% endif %}
+                                        {% if user.can_manage_customers() %}
+                                            <span class="badge bg-success" title="إدارة العملاء">👤</span>
+                                        {% endif %}
+                                        {% if user.can_view_reports() %}
+                                            <span class="badge bg-warning" title="عرض التقارير">📊</span>
+                                        {% endif %}
+                                        {% if user.can_manage_payments() %}
+                                            <span class="badge bg-success" title="إدارة المدفوعات">💰</span>
+                                        {% endif %}
+                                        {% if user.can_delete_data() %}
+                                            <span class="badge bg-danger" title="حذف البيانات">🗑️</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ user.created_at|egypt_time }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ user.created_at|egypt_time_only }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if user.role == 'guest' %}
+                                        <span class="badge bg-secondary">عميل</span>
+                                    {% else %}
+                                        <span class="badge bg-info">موظف</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% if current_user.can_manage_users() and user.id != current_user.id %}
+                                        <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-sm btn-outline-warning" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if user.role == 'guest' and current_user.can_manage_bookings() %}
+                                        <a href="{{ url_for('booking.create', user_id=user.id) }}" class="btn btn-sm btn-outline-success" title="إنشاء حجز">
+                                            <i class="fas fa-calendar-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-user-plus text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">لا يوجد مستخدمين</h4>
+                    <p class="text-muted">لم يتم تسجيل أي مستخدمين في النظام بعد</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات تفصيلية -->
+{% if users %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>توزيع الصلاحيات
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set admin_count = users|selectattr('role', 'equalto', 'admin')|list|length %}
+                {% set manager_count = users|selectattr('role', 'equalto', 'manager')|list|length %}
+                {% set receptionist_count = users|selectattr('role', 'equalto', 'receptionist')|list|length %}
+                {% set accountant_count = users|selectattr('role', 'equalto', 'accountant')|list|length %}
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>مدير النظام</span>
+                    <span class="badge bg-danger">{{ admin_count }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>مدير عام</span>
+                    <span class="badge bg-warning">{{ manager_count }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>موظف استقبال</span>
+                    <span class="badge bg-info">{{ receptionist_count }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>محاسب</span>
+                    <span class="badge bg-success">{{ accountant_count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>إحصائيات إضافية
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set admin_users = users|selectattr('role', 'equalto', 'admin')|list|length %}
+                {% set staff_users = users|rejectattr('role', 'equalto', 'guest')|list|length %}
+                {% set guest_users = users|selectattr('role', 'equalto', 'guest')|list|length %}
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>المسؤولين</span>
+                    <strong class="text-danger">{{ admin_users }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>الموظفين</span>
+                    <strong class="text-primary">{{ staff_users }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>العملاء</span>
+                    <strong class="text-secondary">{{ guest_users }}</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>نسبة الموظفين</span>
+                    <strong class="text-info">{{ "%.1f"|format((staff_users / users|length) * 100) if users else 0 }}%</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>أحدث مستخدم</span>
+                    <strong class="text-success">{{ users|map(attribute='created_at')|max|strftime('%Y-%m-%d') if users else 'لا يوجد' }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Export functions removed as per requirements
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add search and filter functionality
+        const searchInput = document.getElementById('userSearch');
+        const roleFilter = document.getElementById('roleFilter');
+        const table = document.getElementById('usersTable');
+        
+        function filterTable() {
+            if (!table) return;
+            
+            const searchText = searchInput.value.toLowerCase();
+            const selectedRole = roleFilter.value.toLowerCase();
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const username = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+                const roleCell = rows[i].getElementsByTagName('td')[1];
+                const roleText = roleCell.textContent.toLowerCase();
+                
+                const matchesSearch = username.includes(searchText);
+                const matchesRole = selectedRole === '' || roleText.includes(selectedRole);
+                
+                if (matchesSearch && matchesRole) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('keyup', filterTable);
+        }
+        
+        if (roleFilter) {
+            roleFilter.addEventListener('change', filterTable);
+        }
+    });
+</script>
+{% endblock %}

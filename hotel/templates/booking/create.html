@@ -1,0 +1,1554 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4">
+            <i class="fas fa-calendar-plus me-2"></i>حجز جديد
+        </h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">الرئيسية</a></li>
+                {% if current_user.has_permission('manage_bookings') %}
+                <li class="breadcrumb-item"><a href="{{ url_for('booking.index') }}">الحجوزات</a></li>
+                {% else %}
+                <li class="breadcrumb-item"><a href="{{ url_for('booking.my_bookings') }}">حجوزاتي</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active">حجز جديد</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>بيانات الحجز
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('booking.create') }}" id="bookingForm">
+                    {{ form.hidden_tag() }}
+                    {{ form.customer_id() }}
+
+                    <!-- البحث عن العميل -->
+                    <div class="mb-3">
+                        <label for="customerSearch" class="form-label">
+                            <i class="fas fa-search me-2"></i>البحث عن العميل
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="customerSearch"
+                                   placeholder="ابحث بالاسم أو رقم الهوية أو الهاتف...">
+                            <button type="button" class="btn btn-outline-primary" id="showAllCustomersBtn">
+                                <i class="fas fa-list"></i> عرض الكل
+                            </button>
+                        </div>
+                        <div id="customerSearchResults" class="mt-2 position-relative"></div>
+                    </div>
+
+                    <!-- بيانات العميل المختار -->
+                    <div id="selectedCustomerInfo" class="mb-3" style="display: none;">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-user-check me-2"></i>العميل المختار
+                                    <button type="button" class="btn btn-sm btn-outline-light float-end" id="changeCustomerBtn">
+                                        <i class="fas fa-edit"></i> تغيير
+                                    </button>
+                                </h6>
+                            </div>
+                            <div class="card-body" id="customerDetails">
+                                <!-- سيتم ملء البيانات هنا -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- اختيار الغرفة -->
+                    <div class="mb-3">
+                        <label for="room_id" class="form-label">
+                            <i class="fas fa-bed me-2"></i>اختيار الغرفة
+                        </label>
+                        {{ form.room_id(class="form-select") }}
+                        <div class="form-text">اختر الغرفة المطلوبة</div>
+                    </div>
+
+                    <!-- التواريخ -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="check_in_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-2"></i>تاريخ الوصول
+                            </label>
+                            {{ form.check_in_date(class="form-control", type="date") }}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                اختر تاريخ وصول العميل
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="check_out_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-2"></i>تاريخ المغادرة
+                            </label>
+                            {{ form.check_out_date(class="form-control") }}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                اختر تاريخ مغادرة العميل
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- عرض عدد الأيام بشكل احترافي -->
+                    <div class="mb-3" id="daysDisplayContainer">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div id="daysDisplay" class="days-summary" style="display: none;">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="days-icon me-3">
+                                            <i class="fas fa-calendar-day"></i>
+                                        </div>
+                                        <div class="days-content">
+                                            <h6 class="mb-1 text-primary">مدة الإقامة</h6>
+                                            <div class="days-number">
+                                                <span id="numberOfDays" class="fw-bold">0</span>
+                                                <span class="days-text">يوم</span>
+                                            </div>
+                                        </div>
+                                        <div class="days-dates ms-auto">
+                                            <small class="text-muted">
+                                                <span id="dateRange">-</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- نوع الإقامة -->
+                    <div class="mb-3">
+                        <label for="occupancy_type" class="form-label">
+                            <i class="fas fa-users me-2"></i>نوع الإقامة
+                        </label>
+                        {{ form.occupancy_type(class="form-select") }}
+                        <div class="form-text">اختر نوع الإقامة المطلوب</div>
+                    </div>
+
+                    <!-- خيارات إضافية -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-cog me-2"></i>خيارات إضافية
+                        </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.include_tax(class="form-check-input") }}
+                                    <label class="form-check-label" for="include_tax">
+                                        <strong>إضافة ضريبة 14%</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-receipt me-1"></i>سيتم إضافة 14% ضريبة على المبلغ
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_deus(class="form-check-input") }}
+                                    <label class="form-check-label" for="is_deus">
+                                        <strong>ديوز (أسعار مخفضة)</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-star me-1"></i>Single: 600، Double: 800، Triple: 1000
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- الخصم -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-percentage me-2"></i>الخصم
+                        </label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="discount_percentage" class="form-label">نسبة الخصم (%)</label>
+                                <div class="input-group">
+                                    {{ form.discount_percentage(class="form-control", placeholder="0", id="discount_percentage") }}
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="discount_amount" class="form-label">مبلغ الخصم (جنيه)</label>
+                                <div class="input-group">
+                                    {{ form.discount_amount(class="form-control", placeholder="0", id="discount_amount") }}
+                                    <span class="input-group-text">جنيه</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            يمكنك إدخال نسبة الخصم أو مبلغ الخصم - سيتم حساب الآخر تلقائياً
+                        </div>
+                    </div>
+
+                    <!-- ملخص الحساب -->
+                    <div class="mb-3">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-calculator me-2"></i>ملخص الحساب التفصيلي
+                                </h6>
+                            </div>
+                            <div class="card-body" id="calculationSummary">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>نوع الإقامة:</strong> <span id="displayOccupancyType">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>عدد الأيام:</strong> <span id="displayDays">-</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <strong>السعر/ليلة:</strong> <span id="displayPricePerNight">-</span> جنيه
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>المبلغ الأساسي:</strong> <span id="displayBaseAmount">-</span> جنيه
+                                    </div>
+                                </div>
+                                <div class="row mt-2" id="discountRow" style="display: none;">
+                                    <div class="col-md-6">
+                                        <strong>نسبة الخصم:</strong> <span id="displayDiscountPercent">0</span>%
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>مبلغ الخصم:</strong> <span id="displayDiscountAmount">0</span> جنيه
+                                    </div>
+                                </div>
+                                <div class="row mt-2" id="taxRow" style="display: none;">
+                                    <div class="col-md-6">
+                                        <strong>المبلغ بعد الخصم:</strong> <span id="displayAfterDiscount">-</span> جنيه
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>ضريبة 14%:</strong> <span id="displayTaxAmount">0</span> جنيه
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="text-center">
+                                    <h5 class="text-success">
+                                        <strong>المبلغ الإجمالي: <span id="displayTotalAmount">-</span> جنيه</strong>
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- الملاحظات -->
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note me-2"></i>ملاحظات
+                        </label>
+                        {{ form.notes(class="form-control", rows="3", placeholder="أدخل أي ملاحظات إضافية...") }}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-warning" id="resetFormBtn">
+                            <i class="fas fa-redo me-1"></i>إعادة تعيين
+                        </button>
+                        {% if current_user.has_permission('manage_bookings') %}
+                        <a href="{{ url_for('booking.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('booking.my_bookings') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </a>
+                        {% endif %}
+                        {{ form.submit(class="btn btn-success btn-lg", id="submitBookingBtn") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-ol me-2"></i>خطوات الحجز
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex align-items-center" id="step1">
+                        <span class="badge bg-primary rounded-pill me-2">1</span>
+                        <span>اختيار العميل</span>
+                        <i class="fas fa-check text-success ms-auto" style="display: none;"></i>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center" id="step2">
+                        <span class="badge bg-secondary rounded-pill me-2">2</span>
+                        <span>تحديد التواريخ</span>
+                        <i class="fas fa-check text-success ms-auto" style="display: none;"></i>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center" id="step3">
+                        <span class="badge bg-secondary rounded-pill me-2">3</span>
+                        <span>اختيار الغرفة</span>
+                        <i class="fas fa-check text-success ms-auto" style="display: none;"></i>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center" id="step4">
+                        <span class="badge bg-secondary rounded-pill me-2">4</span>
+                        <span>نوع الإقامة</span>
+                        <i class="fas fa-check text-success ms-auto" style="display: none;"></i>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center" id="step5">
+                        <span class="badge bg-secondary rounded-pill me-2">5</span>
+                        <span>تأكيد الحجز</span>
+                        <i class="fas fa-check text-success ms-auto" style="display: none;"></i>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>نصائح:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>ابحث عن العميل بالاسم أو رقم الهوية أو الهاتف</li>
+                            <li>حدد التواريخ أولاً لعرض الغرف المتاحة</li>
+                            <li>يمكن تطبيق خصم وضريبة حسب الحاجة</li>
+                            <li>راجع جميع البيانات قبل التأكيد</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- إضافة عميل جديد -->
+        <div class="card mt-3" id="newCustomerCard" style="display: none;">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>إضافة عميل جديد
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="newCustomerForm">
+                    <div class="mb-3">
+                        <label for="newCustomerName" class="form-label">الاسم *</label>
+                        <input type="text" class="form-control" id="newCustomerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newCustomerIdNumber" class="form-label">رقم الهوية *</label>
+                        <input type="text" class="form-control" id="newCustomerIdNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newCustomerPhone" class="form-label">الهاتف</label>
+                        <input type="text" class="form-control" id="newCustomerPhone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newCustomerEmail" class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" id="newCustomerEmail">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>حفظ العميل
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="cancelNewCustomerBtn">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+/* تحسين مظهر نتائج البحث */
+#customerSearchResults {
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+#customerSearchResults .list-group {
+    margin-bottom: 0;
+    border-radius: 0.375rem;
+}
+
+#customerSearchResults .list-group-item {
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+#customerSearchResults .list-group-item:first-child {
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+}
+
+#customerSearchResults .list-group-item:last-child {
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+#customerSearchResults .list-group-item:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+    transform: translateX(-2px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 123, 255, 0.15);
+}
+
+#customerSearchResults .list-group-item:active {
+    background-color: #e3f2fd;
+    border-color: #007bff;
+}
+
+/* تحسين مظهر أيقونة التحميل */
+.search-loading {
+    padding: 1rem;
+    text-align: center;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+.search-loading i {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+/* تحسين مظهر رسالة عدم وجود نتائج */
+.no-results {
+    padding: 1.5rem;
+    text-align: center;
+    color: #6c757d;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 0.375rem;
+}
+
+.no-results i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #856404;
+}
+
+/* تحسين مظهر بيانات العميل */
+.customer-info h6 {
+    color: #495057;
+    font-weight: 600;
+}
+
+.customer-info .text-muted {
+    font-size: 0.875rem;
+}
+
+/* تأثير الانتقال السلس */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* تحسين مظهر العميل المختار */
+#selectedCustomerInfo {
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 200px;
+    }
+}
+
+/* تحسين مظهر أزرار الإجراءات */
+.action-buttons .btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+/* تحسين مظهر عرض الأيام */
+.days-summary {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin: 0.5rem 0;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.days-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #28a745, #17a2b8);
+    border-radius: 1rem 1rem 0 0;
+}
+
+.days-summary.show {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #2196f3;
+    box-shadow: 0 0.5rem 1rem rgba(33, 150, 243, 0.15);
+    transform: scale(1.02);
+}
+
+.days-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 123, 255, 0.3);
+}
+
+.days-content h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.days-number {
+    font-size: 1.75rem;
+    color: #007bff;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.days-text {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-right: 0.5rem;
+}
+
+.days-info {
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: inline-block;
+    transition: all 0.2s ease-in-out;
+}
+
+.days-info:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
+}
+
+.days-dates {
+    text-align: right;
+}
+
+.days-dates small {
+    font-size: 0.875rem;
+    color: #6c757d;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+/* تأثير الظهور السلس */
+.days-summary.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* تأثير الاختفاء السلس */
+.days-summary.fade-out-down {
+    animation: fadeOutDown 0.3s ease-in;
+}
+
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+/* تحسين مظهر حقول التاريخ */
+input[type="date"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    background-color: #f8f9fa;
+}
+
+/* تحسين النصوص التوضيحية */
+.form-text {
+    transition: color 0.2s ease-in-out;
+}
+
+.form-text:hover {
+    color: #007bff !important;
+}
+
+/* تحسين مظهر صف الخصم */
+#discountRow {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: 1px solid #ffc107;
+    transition: all 0.3s ease-in-out;
+}
+
+#discountRow.fade-in {
+    animation: slideInFromTop 0.4s ease-out;
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
+    }
+}
+
+/* تحسين مظهر حقول الخصم */
+#discount_percentage:focus,
+#discount_amount:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    background-color: #fffbf0;
+}
+
+.input-group:has(#discount_percentage:focus),
+.input-group:has(#discount_amount:focus) {
+    box-shadow: 0 0.25rem 0.5rem rgba(255, 193, 7, 0.15);
+}
+
+/* تأثير pulse للمبلغ الإجمالي */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+/* تحسين مظهر المبلغ الإجمالي */
+#displayTotalAmount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #28a745;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<!-- تحميل ملف JavaScript المنفصل -->
+<script src="{{ url_for('static', filename='js/booking-create.js') }}?v=2026.1"></script>
+<script>
+// البحث عن العملاء فقط
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 تحميل نظام البحث عن العملاء...');
+
+    // العناصر الأساسية للبحث
+    const customerSearch = document.getElementById('customerSearch');
+    const customerSearchResults = document.getElementById('customerSearchResults');
+    const selectedCustomerInfo = document.getElementById('selectedCustomerInfo');
+    const customerDetails = document.getElementById('customerDetails');
+    const showAllCustomersBtn = document.getElementById('showAllCustomersBtn');
+    const changeCustomerBtn = document.getElementById('changeCustomerBtn');
+    const customerIdField = document.getElementById('customer_id');
+
+    // بيانات مؤقتة
+    let selectedCustomer = null;
+    let isUpdatingDiscount = false; // لمنع التحديث المتبادل اللانهائي
+
+    // حقول الخصم والضريبة
+    const discountPercentageField = document.getElementById('discount_percentage');
+    const discountAmountField = document.getElementById('discount_amount');
+    const includeTaxField = document.getElementById('include_tax');
+    const isDeusField = document.getElementById('is_deus');
+    const occupancyTypeField = document.getElementById('occupancy_type');
+
+    // ===== البحث عن العملاء =====
+    let searchTimeout;
+
+    if (customerSearch) {
+        customerSearch.addEventListener('input', function() {
+            const query = this.value.trim();
+
+            // إلغاء البحث السابق
+            clearTimeout(searchTimeout);
+
+            if (query.length >= 2) {
+                // تأخير البحث لتحسين الأداء
+                searchTimeout = setTimeout(() => {
+                    searchCustomers(query);
+                }, 300);
+            } else if (query.length === 0) {
+                // إخفاء النتائج عند مسح النص
+                if (customerSearchResults) {
+                    customerSearchResults.style.opacity = '0';
+                    setTimeout(() => {
+                        customerSearchResults.innerHTML = '';
+                        customerSearchResults.style.opacity = '1';
+                    }, 200);
+                }
+            } else {
+                // عرض رسالة للمستخدم
+                if (customerSearchResults) {
+                    customerSearchResults.innerHTML = `
+                        <div class="text-center p-3 text-muted">
+                            <i class="fas fa-keyboard me-2"></i>
+                            اكتب حرفين على الأقل للبحث...
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        // إضافة مستمع للتركيز
+        customerSearch.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2) {
+                searchCustomers(this.value.trim());
+            }
+        });
+
+        // إضافة مستمع لفقدان التركيز
+        customerSearch.addEventListener('blur', function() {
+            // تأخير إخفاء النتائج للسماح بالنقر عليها
+            setTimeout(() => {
+                if (!customerSearchResults.matches(':hover')) {
+                    customerSearchResults.style.opacity = '0';
+                    setTimeout(() => {
+                        if (customerSearchResults.style.opacity === '0') {
+                            customerSearchResults.innerHTML = '';
+                            customerSearchResults.style.opacity = '1';
+                        }
+                    }, 200);
+                }
+            }, 200);
+        });
+    }
+
+    function searchCustomers(query) {
+        if (customerSearchResults) {
+            customerSearchResults.innerHTML = `
+                <div class="search-loading fade-in">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    جاري البحث عن العملاء...
+                </div>
+            `;
+        }
+
+        const url = query ? `/bookings/new-search-customers?q=${encodeURIComponent(query)}` : '/bookings/new-search-customers';
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log('📊 البيانات المستلمة:', data);
+                if (data.success && customerSearchResults) {
+                    displaySearchResults(data.customers, query);
+                } else {
+                    if (customerSearchResults) {
+                        customerSearchResults.innerHTML = `
+                            <div class="alert alert-danger fade-in">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                فشل في جلب البيانات
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('❌ خطأ في البحث:', error);
+                if (customerSearchResults) {
+                    customerSearchResults.innerHTML = `
+                        <div class="alert alert-danger fade-in">
+                            <i class="fas fa-wifi"></i>
+                            حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    function displaySearchResults(customers, query = '') {
+        if (!customerSearchResults) return;
+
+        if (customers.length === 0) {
+            customerSearchResults.innerHTML = `
+                <div class="no-results fade-in">
+                    <i class="fas fa-search"></i>
+                    <div>
+                        ${query ? `لا توجد نتائج للبحث عن "${query}"` : 'لا توجد عملاء مسجلين'}
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        ${query ? 'جرب البحث بكلمات أخرى أو' : ''}
+                        <a href="#" onclick="showNewCustomerForm()" class="text-decoration-none">أضف عميل جديد</a>
+                    </small>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<div class="list-group fade-in">';
+        customers.forEach((customer, index) => {
+            const phone = customer.phone || '';
+            const phoneDisplay = phone ? `<small class="text-muted"><i class="fas fa-phone me-1"></i>${phone}</small>` : '';
+
+            html += `
+                <button type="button" class="list-group-item list-group-item-action"
+                        onclick="selectCustomer(${customer.id}, '${customer.name}', '${customer.id_number}', '${phone}')"
+                        style="animation-delay: ${index * 0.05}s">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="customer-info">
+                            <h6 class="mb-1">
+                                <i class="fas fa-user me-2 text-primary"></i>
+                                ${customer.name}
+                            </h6>
+                            <p class="mb-1 text-muted">
+                                <i class="fas fa-id-card me-1"></i>
+                                رقم الهوية: ${customer.id_number}
+                            </p>
+                            ${phoneDisplay}
+                        </div>
+                        <div class="text-end">
+                            <i class="fas fa-chevron-left text-muted"></i>
+                        </div>
+                    </div>
+                </button>
+            `;
+        });
+        html += '</div>';
+
+        // إضافة معلومات إضافية
+        if (customers.length > 0) {
+            html += `
+                <div class="mt-2 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        تم العثور على ${customers.length} عميل${customers.length > 1 ? '' : ''}
+                    </small>
+                </div>
+            `;
+        }
+
+        customerSearchResults.innerHTML = html;
+    }
+
+    window.selectCustomer = function(id, name, idNumber, phone) {
+        selectedCustomer = { id, name, idNumber, phone };
+
+        // تحديث الحقول
+        if (customerIdField) customerIdField.value = id;
+        if (customerSearch) customerSearch.value = name;
+
+        // إخفاء النتائج بتأثير سلس
+        if (customerSearchResults) {
+            customerSearchResults.style.opacity = '0';
+            setTimeout(() => {
+                customerSearchResults.innerHTML = '';
+                customerSearchResults.style.opacity = '1';
+            }, 200);
+        }
+
+        // عرض بيانات العميل المختار
+        if (selectedCustomerInfo && customerDetails) {
+            customerDetails.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-user me-2 text-primary"></i>الاسم:</strong>
+                        <span class="ms-2">${name}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-id-card me-2 text-info"></i>رقم الهوية:</strong>
+                        <span class="ms-2">${idNumber}</span>
+                    </div>
+                    ${phone ? `
+                        <div class="col-md-12 mt-2">
+                            <strong><i class="fas fa-phone me-2 text-success"></i>الهاتف:</strong>
+                            <span class="ms-2">${phone}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            selectedCustomerInfo.style.display = 'block';
+
+            // إضافة تأثير نجاح
+            selectedCustomerInfo.classList.add('fade-in');
+            setTimeout(() => {
+                selectedCustomerInfo.classList.remove('fade-in');
+            }, 500);
+        }
+
+        // إظهار رسالة نجاح مؤقتة
+        showSuccessMessage(`تم اختيار العميل: ${name}`);
+
+        console.log('✅ تم اختيار العميل:', selectedCustomer);
+    };
+
+    // دالة إظهار رسالة نجاح مؤقتة
+    function showSuccessMessage(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        successDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        successDiv.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(successDiv);
+
+        // إزالة الرسالة تلقائياً بعد 3 ثوان
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.remove();
+            }
+        }, 3000);
+    }
+
+    // دالة إظهار نموذج العميل الجديد
+    window.showNewCustomerForm = function() {
+        const newCustomerCard = document.getElementById('newCustomerCard');
+        if (newCustomerCard) {
+            newCustomerCard.style.display = 'block';
+            newCustomerCard.classList.add('fade-in');
+
+            // التركيز على حقل الاسم
+            const nameField = document.getElementById('newCustomerName');
+            if (nameField) {
+                setTimeout(() => nameField.focus(), 300);
+            }
+        }
+    };
+
+    // زر عرض جميع العملاء
+    if (showAllCustomersBtn) {
+        showAllCustomersBtn.addEventListener('click', function() {
+            searchCustomers('');
+        });
+    }
+
+    // زر تغيير العميل
+    if (changeCustomerBtn) {
+        changeCustomerBtn.addEventListener('click', function() {
+            selectedCustomer = null;
+
+            // إخفاء معلومات العميل بتأثير سلس
+            if (selectedCustomerInfo) {
+                selectedCustomerInfo.style.opacity = '0';
+                setTimeout(() => {
+                    selectedCustomerInfo.style.display = 'none';
+                    selectedCustomerInfo.style.opacity = '1';
+                }, 300);
+            }
+
+            // مسح الحقول
+            if (customerSearch) {
+                customerSearch.value = '';
+                customerSearch.focus();
+                customerSearch.placeholder = 'ابحث عن عميل آخر...';
+            }
+            if (customerIdField) customerIdField.value = '';
+            if (customerSearchResults) customerSearchResults.innerHTML = '';
+
+            // إظهار رسالة
+            showSuccessMessage('تم إلغاء اختيار العميل. يمكنك البحث عن عميل آخر.');
+        });
+    }
+
+    // ===== حساب وعرض عدد الأيام =====
+    const checkInField = document.getElementById('check_in_date');
+    const checkOutField = document.getElementById('check_out_date');
+    const daysDisplay = document.getElementById('daysDisplay');
+    const numberOfDaysSpan = document.getElementById('numberOfDays');
+    const dateRangeSpan = document.getElementById('dateRange');
+
+    function calculateAndDisplayDays() {
+        if (!checkInField || !checkOutField || !daysDisplay) return;
+
+        const checkInValue = checkInField.value;
+        const checkOutValue = checkOutField.value;
+
+        if (checkInValue && checkOutValue) {
+            const checkInDate = new Date(checkInValue);
+            const checkOutDate = new Date(checkOutValue);
+
+            if (checkOutDate > checkInDate) {
+                const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+                const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+                // تحديث عدد الأيام مع تأثير العد
+                if (numberOfDaysSpan) {
+                    animateNumber(numberOfDaysSpan, parseInt(numberOfDaysSpan.textContent) || 0, daysDiff);
+                }
+
+                // تحديث نطاق التواريخ
+                if (dateRangeSpan) {
+                    const checkInFormatted = formatArabicDate(checkInDate);
+                    const checkOutFormatted = formatArabicDate(checkOutDate);
+                    dateRangeSpan.textContent = `من ${checkInFormatted} إلى ${checkOutFormatted}`;
+                }
+
+                // إظهار العرض بتأثير سلس
+                showDaysDisplay();
+
+                // إضافة معلومات إضافية حسب عدد الأيام
+                addDaysInfo(daysDiff);
+
+                // تحديث حساب الخصم عند تغيير التواريخ
+                if (discountPercentageField && discountPercentageField.value && parseFloat(discountPercentageField.value) > 0) {
+                    setTimeout(updateDiscountFromPercentage, 100);
+                } else if (discountAmountField && discountAmountField.value && parseFloat(discountAmountField.value) > 0) {
+                    setTimeout(updateDiscountFromAmount, 100);
+                }
+
+                console.log(`📅 تم حساب عدد الأيام: ${daysDiff}`);
+            } else if (checkOutDate <= checkInDate) {
+                // عرض رسالة خطأ
+                showDaysError('تاريخ المغادرة يجب أن يكون بعد تاريخ الوصول');
+            }
+        } else {
+            // إخفاء العرض إذا لم تكن التواريخ مكتملة
+            hideDaysDisplay();
+        }
+    }
+
+    function showDaysDisplay() {
+        if (daysDisplay && daysDisplay.style.display === 'none') {
+            daysDisplay.style.display = 'block';
+            daysDisplay.classList.remove('fade-out-down');
+            daysDisplay.classList.add('fade-in-up', 'show');
+
+            setTimeout(() => {
+                daysDisplay.classList.remove('fade-in-up');
+            }, 500);
+        }
+    }
+
+    function hideDaysDisplay() {
+        if (daysDisplay && daysDisplay.style.display !== 'none') {
+            daysDisplay.classList.remove('show');
+            daysDisplay.classList.add('fade-out-down');
+
+            setTimeout(() => {
+                daysDisplay.style.display = 'none';
+                daysDisplay.classList.remove('fade-out-down');
+            }, 300);
+        }
+    }
+
+    function showDaysError(message) {
+        if (daysDisplay) {
+            daysDisplay.style.display = 'block';
+            daysDisplay.classList.remove('show', 'fade-in-up');
+            daysDisplay.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="days-icon me-3" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="days-content">
+                        <h6 class="mb-1 text-danger">خطأ في التواريخ</h6>
+                        <div class="text-danger">
+                            <small>${message}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function formatArabicDate(date) {
+        const months = [
+            'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+            'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+        ];
+
+        const day = date.getDate();
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+
+        return `${day} ${month} ${year}`;
+    }
+
+    function animateNumber(element, start, end) {
+        if (start === end) return;
+
+        const duration = 500; // مدة التحريك بالميلي ثانية
+        const startTime = performance.now();
+
+        function updateNumber(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // استخدام easing function للحصول على تأثير سلس
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+            const current = Math.round(start + (end - start) * easeOutQuart);
+
+            element.textContent = current;
+
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            }
+        }
+
+        requestAnimationFrame(updateNumber);
+    }
+
+    function addDaysInfo(days) {
+        const daysContent = daysDisplay.querySelector('.days-content');
+        if (!daysContent) return;
+
+        // إزالة أي معلومات سابقة
+        const existingInfo = daysContent.querySelector('.days-info');
+        if (existingInfo) {
+            existingInfo.remove();
+        }
+
+        let infoText = '';
+        let infoClass = 'text-info';
+
+        if (days === 1) {
+            infoText = 'إقامة ليلة واحدة';
+            infoClass = 'text-primary';
+        } else if (days <= 3) {
+            infoText = 'إقامة قصيرة';
+            infoClass = 'text-success';
+        } else if (days <= 7) {
+            infoText = 'إقامة أسبوعية';
+            infoClass = 'text-info';
+        } else if (days <= 30) {
+            infoText = 'إقامة شهرية';
+            infoClass = 'text-warning';
+        } else {
+            infoText = 'إقامة طويلة المدى';
+            infoClass = 'text-danger';
+        }
+
+        const infoElement = document.createElement('div');
+        infoElement.className = `days-info ${infoClass}`;
+        infoElement.innerHTML = `<small><i class="fas fa-tag me-1"></i>${infoText}</small>`;
+
+        daysContent.appendChild(infoElement);
+    }
+
+    // ===== نظام حساب الخصم المتبادل =====
+    function updateDiscountFromPercentage() {
+        if (isUpdatingDiscount) return;
+        isUpdatingDiscount = true;
+
+        const percentage = parseFloat(discountPercentageField.value) || 0;
+        const baseAmount = getCurrentBaseAmount();
+
+        console.log('🔄 تحديث مبلغ الخصم من النسبة:', { percentage, baseAmount });
+
+        if (baseAmount > 0 && percentage > 0) {
+            const amount = (baseAmount * percentage) / 100;
+            discountAmountField.value = Math.round(amount);
+            console.log('💰 مبلغ الخصم المحسوب:', amount);
+        } else {
+            discountAmountField.value = '0';
+        }
+
+        // تحديث الحساب الشامل
+        calculateTotalAmount();
+        isUpdatingDiscount = false;
+    }
+
+    function updateDiscountFromAmount() {
+        if (isUpdatingDiscount) return;
+        isUpdatingDiscount = true;
+
+        const amount = parseFloat(discountAmountField.value) || 0;
+        const baseAmount = getCurrentBaseAmount();
+
+        console.log('🔄 تحديث نسبة الخصم من المبلغ:', { amount, baseAmount });
+
+        if (baseAmount > 0 && amount > 0) {
+            const percentage = (amount / baseAmount) * 100;
+            discountPercentageField.value = Math.min(percentage, 100).toFixed(2);
+            console.log('📊 نسبة الخصم المحسوبة:', percentage);
+        } else {
+            discountPercentageField.value = '0';
+        }
+
+        // تحديث الحساب الشامل
+        calculateTotalAmount();
+        isUpdatingDiscount = false;
+    }
+
+    function getCurrentBaseAmount() {
+        const checkInValue = checkInField ? checkInField.value : '';
+        const checkOutValue = checkOutField ? checkOutField.value : '';
+
+        if (!checkInValue || !checkOutValue) {
+            return 0;
+        }
+
+        const checkInDate = new Date(checkInValue);
+        const checkOutDate = new Date(checkOutValue);
+
+        if (checkOutDate <= checkInDate) {
+            return 0;
+        }
+
+        const days = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+
+        // تحديد السعر بناءً على نوع الإقامة وحالة ديوز
+        let pricePerNight = 800; // سعر افتراضي
+
+        const occupancyType = occupancyTypeField ? occupancyTypeField.value : '';
+        const isDeus = isDeusField ? isDeusField.checked : false;
+
+        if (isDeus) {
+            const deusPrices = { single: 600, double: 800, triple: 1000 };
+            pricePerNight = deusPrices[occupancyType] || 500;
+        } else {
+            // التحقق من السنة لتحديد الأسعار (تحديث 2026)
+            let is2026 = true;
+            
+            if (checkInValue) {
+                const year = parseInt(checkInValue.substring(0, 4));
+                if (!isNaN(year) && year < 2026) {
+                    is2026 = false;
+                }
+            }
+            
+            let normalPrices;
+            if (is2026) {
+                normalPrices = { single: 900, double: 1250, triple: 1500 };
+            } else {
+                normalPrices = { single: 800, double: 1100, triple: 1400 };
+            }
+            
+            pricePerNight = normalPrices[occupancyType] || (is2026 ? 900 : 800);
+        }
+
+        return pricePerNight * days;
+    }
+
+    // ===== نظام حساب المجموع الشامل =====
+    function calculateTotalAmount() {
+        console.log('💰 بدء حساب المجموع الشامل...');
+
+        const baseAmount = getCurrentBaseAmount();
+        const discountPercent = parseFloat(discountPercentageField ? discountPercentageField.value : 0) || 0;
+        const discountAmount = parseFloat(discountAmountField ? discountAmountField.value : 0) || 0;
+        const includeTax = includeTaxField ? includeTaxField.checked : false;
+
+        if (baseAmount === 0) {
+            updateTotalDisplay({
+                baseAmount: 0,
+                discountPercent: 0,
+                discountAmount: 0,
+                afterDiscount: 0,
+                taxAmount: 0,
+                totalAmount: 0
+            });
+            return;
+        }
+
+        // حساب الضريبة أولاً على المبلغ الأساسي
+        const taxAmount = includeTax ? (baseAmount * 0.14) : 0;
+        const totalWithTax = baseAmount + taxAmount;
+
+        // حساب الخصم على الإجمالي (شامل الضريبة)
+        let finalDiscountAmount = 0;
+        if (discountAmount > 0) {
+            finalDiscountAmount = discountAmount;
+        } else if (discountPercent > 0) {
+            finalDiscountAmount = (totalWithTax * discountPercent) / 100;
+        }
+
+        // التأكد من أن الخصم لا يتجاوز الإجمالي مع الضريبة
+        finalDiscountAmount = Math.min(finalDiscountAmount, totalWithTax);
+
+        const totalAmount = totalWithTax - finalDiscountAmount;
+        const afterDiscount = totalAmount - taxAmount; // للعرض فقط
+
+        const calculation = {
+            baseAmount: baseAmount,
+            discountPercent: discountPercent,
+            discountAmount: finalDiscountAmount,
+            afterDiscount: afterDiscount,
+            taxAmount: taxAmount,
+            totalAmount: totalAmount
+        };
+
+        console.log('📊 نتائج الحساب:', calculation);
+
+        updateTotalDisplay(calculation);
+        return calculation;
+    }
+
+    function updateTotalDisplay(calc) {
+        // تحديث المبلغ الأساسي
+        const displayBaseAmount = document.getElementById('displayBaseAmount');
+        if (displayBaseAmount) {
+            displayBaseAmount.textContent = calc.baseAmount ? calc.baseAmount.toFixed(0) : '-';
+        }
+
+        // تحديث الخصم
+        const displayDiscountPercent = document.getElementById('displayDiscountPercent');
+        const displayDiscountAmount = document.getElementById('displayDiscountAmount');
+        if (displayDiscountPercent) {
+            displayDiscountPercent.textContent = calc.discountPercent.toFixed(1);
+        }
+        if (displayDiscountAmount) {
+            displayDiscountAmount.textContent = calc.discountAmount.toFixed(0);
+        }
+
+        // تحديث المبلغ بعد الخصم
+        const displayAfterDiscount = document.getElementById('displayAfterDiscount');
+        if (displayAfterDiscount) {
+            displayAfterDiscount.textContent = calc.afterDiscount ? calc.afterDiscount.toFixed(0) : '-';
+        }
+
+        // تحديث الضريبة
+        const displayTaxAmount = document.getElementById('displayTaxAmount');
+        if (displayTaxAmount) {
+            displayTaxAmount.textContent = calc.taxAmount.toFixed(0);
+        }
+
+        // تحديث المبلغ الإجمالي
+        const displayTotalAmount = document.getElementById('displayTotalAmount');
+        if (displayTotalAmount) {
+            displayTotalAmount.textContent = calc.totalAmount ? calc.totalAmount.toFixed(0) : '-';
+
+            // إضافة تأثير بصري للمبلغ الإجمالي
+            displayTotalAmount.parentElement.style.animation = 'pulse 0.5s ease-in-out';
+            setTimeout(() => {
+                if (displayTotalAmount.parentElement) {
+                    displayTotalAmount.parentElement.style.animation = '';
+                }
+            }, 500);
+        }
+
+        // إظهار/إخفاء الصفوف
+        const discountRow = document.getElementById('discountRow');
+        const taxRow = document.getElementById('taxRow');
+
+        if (discountRow) {
+            discountRow.style.display = calc.discountAmount > 0 ? 'block' : 'none';
+        }
+
+        if (taxRow) {
+            taxRow.style.display = calc.taxAmount > 0 ? 'block' : 'none';
+        }
+
+        console.log('✅ تم تحديث عرض المجموع');
+    }
+
+    function updateDiscountDisplay() {
+        const discountPercent = parseFloat(discountPercentageField.value) || 0;
+        const discountAmount = parseFloat(discountAmountField.value) || 0;
+
+        // تحديث عناصر العرض
+        const displayDiscountPercent = document.getElementById('displayDiscountPercent');
+        const displayDiscountAmount = document.getElementById('displayDiscountAmount');
+        const discountRow = document.getElementById('discountRow');
+
+        if (displayDiscountPercent) {
+            displayDiscountPercent.textContent = discountPercent.toFixed(2);
+        }
+
+        if (displayDiscountAmount) {
+            displayDiscountAmount.textContent = Math.round(discountAmount);
+        }
+
+        // إظهار/إخفاء صف الخصم
+        if (discountRow) {
+            if (discountPercent > 0 || discountAmount > 0) {
+                discountRow.style.display = 'block';
+                discountRow.classList.add('fade-in');
+
+                // إضافة رسالة توضيحية
+                showDiscountMessage(discountPercent, discountAmount);
+            } else {
+                discountRow.style.display = 'none';
+                discountRow.classList.remove('fade-in');
+                hideDiscountMessage();
+            }
+        }
+
+        console.log('📊 تم تحديث عرض الخصم:', { discountPercent, discountAmount });
+    }
+
+    function showDiscountMessage(percent, amount) {
+        // إزالة أي رسالة سابقة
+        hideDiscountMessage();
+
+        let message = '';
+        if (percent > 0 && amount > 0) {
+            message = `تم تطبيق خصم ${percent.toFixed(1)}% بقيمة ${Math.round(amount)} جنيه`;
+        } else if (percent > 0) {
+            message = `تم تطبيق خصم ${percent.toFixed(1)}%`;
+        } else if (amount > 0) {
+            message = `تم تطبيق خصم بقيمة ${Math.round(amount)} جنيه`;
+        }
+
+        if (message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'discountMessage';
+            messageDiv.className = 'alert alert-warning alert-dismissible fade show mt-2';
+            messageDiv.innerHTML = `
+                <i class="fas fa-percentage me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" onclick="hideDiscountMessage()"></button>
+            `;
+
+            const discountSection = document.querySelector('.mb-3:has(#discount_percentage)');
+            if (discountSection) {
+                discountSection.appendChild(messageDiv);
+            }
+        }
+    }
+
+    function hideDiscountMessage() {
+        const existingMessage = document.getElementById('discountMessage');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+    }
+
+    // إضافة مستمعات الأحداث للخصم
+    if (discountPercentageField) {
+        discountPercentageField.addEventListener('input', function() {
+            // إذا تم مسح الحقل، امسح الحقل الآخر أيضاً
+            if (this.value === '' || this.value === '0') {
+                if (discountAmountField) discountAmountField.value = '0';
+                calculateTotalAmount();
+            } else {
+                updateDiscountFromPercentage();
+            }
+        });
+        discountPercentageField.addEventListener('change', updateDiscountFromPercentage);
+        console.log('✅ تم إضافة مستمعات أحداث لحقل نسبة الخصم');
+    } else {
+        console.log('❌ حقل نسبة الخصم غير موجود');
+    }
+
+    if (discountAmountField) {
+        discountAmountField.addEventListener('input', function() {
+            // إذا تم مسح الحقل، امسح الحقل الآخر أيضاً
+            if (this.value === '' || this.value === '0') {
+                if (discountPercentageField) discountPercentageField.value = '0';
+                calculateTotalAmount();
+            } else {
+                updateDiscountFromAmount();
+            }
+        });
+        discountAmountField.addEventListener('change', updateDiscountFromAmount);
+        console.log('✅ تم إضافة مستمعات أحداث لحقل مبلغ الخصم');
+    } else {
+        console.log('❌ حقل مبلغ الخصم غير موجود');
+    }
+
+    // إضافة مستمعات الأحداث للتواريخ
+    if (checkInField) {
+        checkInField.addEventListener('change', calculateAndDisplayDays);
+        checkInField.addEventListener('input', calculateAndDisplayDays);
+    }
+
+    if (checkOutField) {
+        checkOutField.addEventListener('change', calculateAndDisplayDays);
+        checkOutField.addEventListener('input', calculateAndDisplayDays);
+    }
+
+    // إضافة مستمعات أحداث للضريبة ونوع الإقامة
+    if (includeTaxField) {
+        includeTaxField.addEventListener('change', function() {
+            console.log('🔄 تغيير في حالة الضريبة:', this.checked);
+            calculateTotalAmount();
+        });
+    }
+
+    if (isDeusField) {
+        isDeusField.addEventListener('change', function() {
+            console.log('🔄 تغيير في حالة ديوز:', this.checked);
+            calculateTotalAmount();
+            // إعادة حساب الخصم إذا كان موجود
+            if (discountPercentageField && discountPercentageField.value && parseFloat(discountPercentageField.value) > 0) {
+                setTimeout(updateDiscountFromPercentage, 100);
+            }
+        });
+    }
+
+    if (occupancyTypeField) {
+        occupancyTypeField.addEventListener('change', function() {
+            console.log('🔄 تغيير في نوع الإقامة:', this.value);
+            calculateTotalAmount();
+            // إعادة حساب الخصم إذا كان موجود
+            if (discountPercentageField && discountPercentageField.value && parseFloat(discountPercentageField.value) > 0) {
+                setTimeout(updateDiscountFromPercentage, 100);
+            }
+        });
+    }
+
+    // حساب أولي عند تحميل الصفحة
+    setTimeout(() => {
+        calculateAndDisplayDays();
+        calculateTotalAmount();
+    }, 500);
+
+    console.log('✅ تم تحميل نظام البحث ونظام حساب الأيام والمجموع بنجاح');
+});
+</script>
+{% endblock %}

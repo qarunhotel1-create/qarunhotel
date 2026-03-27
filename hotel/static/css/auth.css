@@ -1,0 +1,166 @@
+/* Split dark, cinematic, responsive login (organized) */
+:root{
+  --auth-primary:#22d3ee;            /* cyan accent */
+  --auth-primary-600:#06b6d4;        /* hover */
+  --surface:#111827;                 /* dark surface */
+  --surface-2:#0b1220;               /* deeper */
+  --text:#e5e7eb;                    /* light text */
+  --muted:#9ca3af;                   /* muted text */
+  --ring:#22d3ee;                    /* focus ring */
+}
+
+html,body{height:100%;}
+body.auth-body{
+  font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+  color:var(--text);
+  background:
+    radial-gradient(80% 120% at -10% -20%, rgba(139,92,246,.18), transparent 60%),
+    radial-gradient(70% 110% at 120% 120%, rgba(124,58,237,.16), transparent 60%),
+    linear-gradient(140deg, var(--surface-2) 0%, #0e1628 60%, #0b1220 100%);
+  min-height:100vh;
+}
+
+/* brand (mobile) */
+.brand-mini .brand-icon{ font-size:1.65rem; color:var(--auth-primary); }
+.brand-mini .brand-title{ font-weight:700; color:#f3f4f6; }
+
+/* gradient text & icon utilities - black + purple blend */
+.gradient-text{
+  background: linear-gradient(135deg,
+    #000000 0%,      /* black */
+    #0b1220 25%,     /* page dark */
+    #5b21b6 60%,     /* deep violet */
+    #7c3aed 85%,     /* violet */
+    #a78bfa 100%     /* light violet for highlight */
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 10px rgba(124,58,237,.35);
+}
+.gradient-icon{
+  background: linear-gradient(135deg,
+    #000000 0%,
+    #0b1220 25%,
+    #5b21b6 60%,
+    #7c3aed 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 6px 14px rgba(124,58,237,.28));
+}
+
+/* layout */
+.auth-page .brand-pane{
+  position:relative; height:100%;
+  background:
+    radial-gradient(70% 100% at 120% -10%, rgba(59,130,246,.22), transparent 60%),
+    radial-gradient(80% 100% at -20% 120%, rgba(99,102,241,.16), transparent 60%),
+    linear-gradient(135deg, #0a111e 0%, #0d1526 100%);
+  overflow:hidden;
+}
+/* grid lines */
+.auth-page .brand-pane::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    repeating-linear-gradient(to right, rgba(255,255,255,.035) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px 72px);
+  mix-blend-mode: overlay; opacity:.35;
+}
+/* soft sheen */
+.auth-page .brand-pane::after{
+  content:""; position:absolute; inset:-20%; pointer-events:none; border-radius:6px;
+  background: radial-gradient(40% 30% at 20% 10%, rgba(34,211,238,.14), transparent 70%),
+              radial-gradient(50% 40% at 90% 80%, rgba(59,130,246,.10), transparent 70%);
+  animation: drift 22s ease-in-out infinite alternate;
+}
+@keyframes drift{ from{transform:translate3d(0,0,0);} to{transform:translate3d(-2%,2%,0);} }
+
+.brand-content{ position:relative; z-index:1; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.5rem; padding:3rem; }
+.brand-content .brand-icon{ font-size:5rem; color:var(--accent-purple); }
+.brand-content .brand-title{ font-weight:800; letter-spacing:.8px; color:#f3f4f6; font-size:3.2rem; margin-top:.25rem; text-shadow:0 4px 16px rgba(139,92,246,.25); }
+.brand-content .brand-tagline{ color:var(--muted); }
+.brand-content .chip{ color:#120f1a; background:linear-gradient(180deg, #b7a0fa, #8b5cf6); border-radius:999px; padding:.35rem .7rem; font-size:.85rem; font-weight:600; box-shadow:0 6px 16px rgba(139,92,246,.28); }
+
+/* form pane */
+.form-pane{ background: linear-gradient(180deg, transparent, rgba(255,255,255,.02)); }
+
+/* dark glass card */
+.auth-card{
+  position:relative;
+  background:
+    linear-gradient(180deg, rgba(17,24,39,.88), rgba(17,24,39,.86)) padding-box,
+    linear-gradient(135deg, rgba(139,92,246,.28), rgba(34,211,238,.16)) border-box;
+  border:1px solid transparent;
+  border-radius:16px;
+  box-shadow: 0 18px 44px rgba(139,92,246,.16), 0 8px 22px rgba(0,0,0,.35);
+}
+
+.auth-head h1{ font-size:1.35rem; color:#f3f4f6; }
+.auth-head p{ color:var(--muted); }
+
+/* inputs - dark */
+.auth-input{ padding:1rem 1rem; border-radius:12px; background:#0f172a; color:var(--text); border:1px solid rgba(148,163,184,.25); }
+.auth-input::placeholder{ color:#94a3b8; opacity:.9; }
+.auth-input:focus{ border-color:var(--ring); box-shadow:0 0 0 .2rem rgba(34,211,238,.18); }
+
+/* checkbox color on dark */
+.form-check-input{ cursor:pointer; }
+.form-check-input:checked{ background-color:var(--auth-primary); border-color:var(--auth-primary); }
+.form-check-label{ color:var(--text); }
+
+/* button */
+.auth-btn{ padding:1rem 1rem; border-radius:12px; transition: transform .08s ease, box-shadow .2s ease; }
+.auth-btn:active{ transform:scale(.985); }
+.auth-btn-primary{ color:#05252b; background-image: linear-gradient(135deg, #67e8f9 0%, #22d3ee 45%, #38bdf8 100%); border:0; box-shadow: 0 10px 24px rgba(34,211,238,.22); }
+.auth-btn-primary:hover{ box-shadow: 0 14px 32px rgba(34,211,238,.28); }
+
+/* spacing on small screens */
+@media (max-width: 576px){ .auth-card{ padding:1.15rem !important; border-radius:14px; } }
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce){ *{ animation:none!important; transition:none!important; } }
+
+/* ================================
+   Purple accent integration (موف)
+   ================================ */
+:root{
+  --accent-purple:#8b5cf6;           /* violet 500 */
+  --accent-purple-600:#7c3aed;       /* violet 600 */
+}
+
+/* Stronger purple presence in right pane */
+.auth-page .brand-pane{
+  background:
+    radial-gradient(80% 120% at 110% -10%, rgba(139,92,246,.28), transparent 65%),
+    radial-gradient(85% 120% at -20% 120%, rgba(124,58,237,.22), transparent 65%),
+    linear-gradient(135deg, #0a111e 0%, #0d1526 100%);
+}
+.auth-page .brand-pane::after{
+  background:
+    radial-gradient(42% 32% at 20% 10%, rgba(34,211,238,.12), transparent 70%),
+    radial-gradient(55% 45% at 82% 78%, rgba(139,92,246,.20), transparent 72%);
+}
+
+/* Inputs focus ring with purple-cyan blend */
+.auth-input:focus{
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 .2rem rgba(139,92,246,.18);
+}
+
+/* Checkbox color */
+.form-check-input:checked{
+  background-color: var(--accent-purple);
+  border-color: var(--accent-purple);
+}
+
+/* Primary button gradient mixed with stronger purple */
+.auth-btn-primary{
+  color:#120f1a;
+  background-image: linear-gradient(135deg, #67e8f9 0%, #8b5cf6 55%, #7c3aed 100%);
+  box-shadow: 0 12px 28px rgba(139,92,246,.26);
+}
+.auth-btn-primary:hover{
+  box-shadow: 0 16px 36px rgba(139,92,246,.34);
+}

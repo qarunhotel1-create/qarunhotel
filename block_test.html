@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Block System Test</title>
+    <meta name="csrf-token" content="test-token">
+</head>
+<body>
+    <h1>Block System Test</h1>
+    <button onclick="testBlock(1)">Test Block Customer 1</button>
+    <button onclick="testUnblock(1)">Test Unblock Customer 1</button>
+    
+    <script>
+    function testBlock(customerId) {
+        console.log('Testing block for customer:', customerId);
+        const reason = prompt('Enter block reason:');
+        if (reason && reason.trim()) {
+            fetch(`/customers-new/block/${customerId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({
+                    reason: reason.trim()
+                })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                alert(data.message || 'Block request completed');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            });
+        }
+    }
+    
+    function testUnblock(customerId) {
+        console.log('Testing unblock for customer:', customerId);
+        if (confirm('Unblock this customer?')) {
+            fetch(`/customers-new/unblock/${customerId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                alert(data.message || 'Unblock request completed');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            });
+        }
+    }
+    </script>
+</body>
+</html>

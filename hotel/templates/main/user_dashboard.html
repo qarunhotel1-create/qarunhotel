@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ title }}
+                </h1>
+                <div class="text-muted">
+                    <i class="fas fa-calendar-alt me-1"></i>{{ today_formatted }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                إجمالي الغرف
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_rooms }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                الغرف المتاحة اليوم
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ available_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-door-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                الغرف المحجوزة اليوم
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ occupied_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                إجمالي العملاء
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_customers }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Map -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-map me-2"></i>خريطة الغرف - {{ today_formatted }}
+                    </h6>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-success me-2">
+                            <i class="fas fa-door-open me-1"></i>فارغة ({{ available_today }})
+                        </span>
+                        <span class="badge bg-danger me-2">
+                            <i class="fas fa-user me-1"></i>محجوزة ({{ occupied_today }})
+                        </span>
+                        <span class="badge bg-warning">
+                            <i class="fas fa-clock me-1"></i>ديوز
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for room_info in rooms_status %}
+                        <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                            <div class="card room-card h-100 
+                                {% if room_info.status_class == 'available' %}room-available border-success{% endif %}
+                                {% if room_info.status_class == 'occupied' %}room-occupied border-danger{% endif %}
+                                {% if room_info.room.status == 'maintenance' %}room-maintenance border-warning{% endif %}
+                                {% if room_info.booking and room_info.booking.is_deus %}room-reserved{% endif %}">
+                                
+                                <div class="card-body text-center p-2">
+                                    <div class="room-number mb-2">
+                                        <strong>{{ room_info.room.room_number }}</strong>
+                                    </div>
+                                    
+                                    <div class="room-status mb-2">
+                                        <i class="{{ room_info.status_icon }} 
+                                           {% if room_info.status_class == 'available' %}text-success{% endif %}
+                                           {% if room_info.status_class == 'occupied' %}text-danger{% endif %}
+                                           {% if room_info.room.status == 'maintenance' %}text-warning{% endif %}"></i>
+                                        <br>
+                                        <small class="
+                                           {% if room_info.status_class == 'available' %}text-success{% endif %}
+                                           {% if room_info.status_class == 'occupied' %}text-danger{% endif %}
+                                           {% if room_info.room.status == 'maintenance' %}text-warning{% endif %}">
+                                            {% if room_info.room.status == 'maintenance' %}
+                                                صيانة
+                                            {% else %}
+                                                {{ room_info.status_text }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    
+                                    {% if room_info.booking %}
+                                    <div class="booking-info">
+                                        <small class="text-muted d-block">{{ room_info.booking.customer.name }}</small>
+                                        {% if room_info.booking.is_deus %}
+                                        <span class="badge bg-warning text-dark">ديوز</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="room-type mt-1">
+                                        <small class="text-muted">{{ room_info.room.get_type_display() }}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer p-1">
+                                    <div class="btn-group w-100" role="group">
+                                        <a href="{{ url_for('room.details', id=room_info.room.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="تفاصيل الغرفة">
+                                            <i class="fas fa-info"></i>
+                                        </a>
+                                        {% if room_info.booking %}
+                                        <a href="{{ url_for('booking.details', id=room_info.booking.id) }}" 
+                                           class="btn btn-sm btn-outline-info" title="تفاصيل الحجز">
+                                            <i class="fas fa-calendar"></i>
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ url_for('booking.create', room_id=room_info.room.id) }}" 
+                                           class="btn btn-sm btn-outline-success" title="حجز جديد">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    {% if recent_bookings %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock me-2"></i>أحدث الحجوزات
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>رقم الحجز</th>
+                                    <th>العميل</th>
+                                    <th>الغرفة</th>
+                                    <th>تاريخ الوصول</th>
+                                    <th>تاريخ المغادرة</th>
+                                    <th>الحالة</th>
+                                    <th>النوع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('booking.details', id=booking.id) }}">
+                                            #{{ booking.booking_code or booking.id }}
+                                        </a>
+                                    </td>
+                                    <td>{{ booking.customer.name }}</td>
+                                    <td>{{ booking.room.room_number }}</td>
+                                    <td>{{ booking.check_in_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ booking.check_out_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if booking.status == 'confirmed' %}bg-success
+                                            {% elif booking.status == 'pending' %}bg-warning
+                                            {% elif booking.status == 'checked_in' %}bg-info
+                                            {% elif booking.status == 'checked_out' %}bg-secondary
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ booking.get_status_display() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if booking.is_deus %}
+                                        <span class="badge bg-warning text-dark">ديوز</span>
+                                        {% else %}
+                                        <span class="badge bg-primary">عادي</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    
+    .room-card {
+        transition: transform 0.2s;
+        min-height: 140px;
+    }
+    
+    .room-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .room-number {
+        font-size: 1.1rem;
+        color: #333;
+    }
+    
+    .booking-info {
+        font-size: 0.8rem;
+    }
+    
+    .card {
+        border-radius: 0.35rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+
+    /* تعزيز وضوح ألوان حالات الغرف */
+    .room-card.room-occupied { background-color: #f8d7da !important; }
+    .room-card.room-reserved { background-color: #fff3cd !important; }
+    .room-card.room-available { background-color: #f0fff4 !important; }
+    .room-card.room-maintenance { background-color: #f8f9fa !important; }
+
+    /* حدود أقوى لتمييز الحالات */
+    .room-occupied { border-color: #c82333 !important; }
+    .room-reserved { border-color: #e0a800 !important; }
+</style>
+{% endblock %}

@@ -1,0 +1,670 @@
+/**
+ * تصميم نظام الوثائق المتقدم
+ * يحتوي على جميع الأنماط المطلوبة للنظام الجديد
+ */
+
+/* ===== متغيرات CSS ===== */
+:root {
+    --primary-color: #0d6efd;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --border-radius: 8px;
+    --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --transition: all 0.3s ease;
+}
+
+/* ===== منطقة رفع الملفات ===== */
+.upload-area {
+    border: 2px dashed var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-area::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(13, 110, 253, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: var(--transition);
+    opacity: 0;
+}
+
+.upload-area:hover {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: var(--info-color);
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+}
+
+.upload-area:hover::before {
+    opacity: 1;
+    animation: shimmer 2s infinite;
+}
+
+.upload-area.dragover {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-color: var(--success-color);
+    transform: scale(1.02);
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+/* ===== بطاقات الوثائق ===== */
+.document-card {
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    background: white;
+    overflow: hidden;
+    position: relative;
+}
+
+.document-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--success-color), var(--info-color));
+    transform: scaleX(0);
+    transition: var(--transition);
+}
+
+.document-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: var(--primary-color);
+}
+
+.document-card:hover::before {
+    transform: scaleX(1);
+}
+
+.document-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.document-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: var(--transition);
+}
+
+.document-card:hover .document-icon::after {
+    width: 100px;
+    height: 100px;
+}
+
+/* ===== عناصر الوثائق ===== */
+.document-item {
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: white;
+    transition: var(--transition);
+    position: relative;
+}
+
+.document-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--primary-color);
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    transform: scaleY(0);
+    transition: var(--transition);
+}
+
+.document-item:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transform: translateX(4px);
+    box-shadow: var(--box-shadow);
+}
+
+.document-item:hover::before {
+    transform: scaleY(1);
+}
+
+.new-document-item {
+    border: 2px solid var(--success-color);
+    background: linear-gradient(135deg, #d1e7dd 0%, #a3d9a4 100%);
+    animation: newDocumentPulse 2s ease-in-out;
+}
+
+@keyframes newDocumentPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+/* ===== الماسح الضوئي ===== */
+.scanner-area {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px dashed #6c757d;
+    border-radius: var(--border-radius);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.scanner-area.scanning {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #d1e7dd 0%, #a3d9a4 100%);
+}
+
+.scanner-area.scanning::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: scanLine 2s infinite;
+}
+
+@keyframes scanLine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.scanned-page {
+    position: relative;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+}
+
+.scanned-page img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.scanned-page:hover img {
+    transform: scale(1.05);
+}
+
+.page-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.8);
+    border-radius: var(--border-radius);
+    padding: 4px;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.scanned-page:hover .page-controls {
+    opacity: 1;
+}
+
+/* ===== الإحصائيات ===== */
+.stat-box {
+    padding: 1rem;
+    text-align: center;
+    border-radius: var(--border-radius);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transition: var(--transition);
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+}
+
+.stat-box:hover::before {
+    transform: scaleX(1);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.stat-mini {
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.stat-mini .stat-number {
+    font-size: 1.2rem;
+}
+
+.stat-mini .stat-label {
+    font-size: 0.7rem;
+}
+
+/* ===== الأزرار المحسنة ===== */
+.btn-enhanced {
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: var(--transition);
+}
+
+.btn-enhanced:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* ===== الدوائر الشخصية ===== */
+.avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--info-color) 100%);
+    box-shadow: var(--box-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar-circle::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    transform: rotate(45deg);
+    transition: var(--transition);
+    opacity: 0;
+}
+
+.avatar-circle:hover::before {
+    opacity: 1;
+    animation: avatarShine 1s ease-in-out;
+}
+
+@keyframes avatarShine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+/* ===== الشارات المحسنة ===== */
+.badge-enhanced {
+    position: relative;
+    overflow: hidden;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.badge-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: var(--transition);
+}
+
+.badge-enhanced:hover::before {
+    left: 100%;
+    transition: left 0.5s ease-in-out;
+}
+
+/* ===== الجداول المحسنة ===== */
+.table-enhanced {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+}
+
+.table-enhanced thead th {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--info-color) 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    position: relative;
+}
+
+.table-enhanced tbody tr {
+    transition: var(--transition);
+}
+
+.table-enhanced tbody tr:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transform: scale(1.01);
+}
+
+/* ===== الكاميرا والمعاينة ===== */
+.camera-container {
+    position: relative;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+}
+
+.camera-container video {
+    width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+}
+
+.preview-container {
+    position: relative;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+}
+
+.preview-container img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+}
+
+/* ===== التحميل والمعالجة ===== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+}
+
+.loading-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: white;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+/* ===== التنبيهات المحسنة ===== */
+.alert-enhanced {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.alert-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: currentColor;
+}
+
+/* ===== الاستجابة للشاشات الصغيرة ===== */
+@media (max-width: 768px) {
+    .upload-area {
+        padding: 1rem;
+    }
+    
+    .upload-area h5 {
+        font-size: 1rem;
+    }
+    
+    .document-icon {
+        height: 60px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .scanner-area {
+        min-height: 150px;
+    }
+}
+
+@media (max-width: 576px) {
+    .upload-area {
+        padding: 0.5rem;
+    }
+    
+    .document-card {
+        margin-bottom: 1rem;
+    }
+    
+    .stat-box {
+        padding: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 1.2rem;
+    }
+    
+    .btn-enhanced {
+        font-size: 0.8rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
+
+/* ===== الطباعة ===== */
+@media print {
+    .upload-area,
+    .scanner-area,
+    .btn,
+    .page-controls,
+    .document-actions {
+        display: none !important;
+    }
+    
+    .document-card,
+    .document-item {
+        border: 1px solid #000;
+        box-shadow: none;
+        break-inside: avoid;
+    }
+    
+    .scanned-page img,
+    .preview-container img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+/* ===== الوضع المظلم ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light-color: #343a40;
+        --dark-color: #f8f9fa;
+    }
+    
+    .upload-area {
+        background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+        color: white;
+    }
+    
+    .document-card,
+    .document-item {
+        background: #495057;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .stat-box {
+        background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+        color: white;
+    }
+    
+    .scanner-area {
+        background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+        color: white;
+    }
+}
+
+/* ===== تحسينات الأداء ===== */
+.document-card,
+.document-item,
+.upload-area,
+.scanner-area {
+    will-change: transform;
+}
+
+.stat-box,
+.avatar-circle,
+.badge-enhanced {
+    will-change: transform, box-shadow;
+}
+
+/* ===== تأثيرات خاصة ===== */
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+.bounce-in {
+    animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}

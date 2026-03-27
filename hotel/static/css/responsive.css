@@ -1,0 +1,63 @@
+/* Responsive helpers to fit any screen without changing OS resolution */
+
+/* Prevent horizontal overflow globally */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure Bootstrap containers/columns can shrink properly */
+.container, .container-fluid, .row, [class*="col-"] {
+  min-width: 0;
+}
+
+/* Base font scaling for smaller screens (improves fit) */
+@media (max-width: 1200px) {
+  body { font-size: 0.95rem; }
+}
+@media (max-width: 992px) {
+  body { font-size: 0.93rem; }
+}
+@media (max-width: 768px) {
+  body { font-size: 0.92rem; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+  .form-control, .form-select { font-size: 0.95rem; }
+  label, .form-label { font-size: 0.95rem; }
+}
+
+/* Tables: allow horizontal scroll on small screens instead of breaking layout */
+@media (max-width: 992px) {
+  .table-responsive, .table, .table-wrap {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table { white-space: nowrap; }
+}
+
+/* Images and media scale within their containers */
+img, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Cards/forms spacing tweaks for mobile */
+@media (max-width: 768px) {
+  .card-body { padding: 1rem; }
+  .card-header { padding: 0.9rem 1rem; }
+  .btn { padding: 0.6rem 1rem; }
+}
+
+/* Navbar spacing and page top offset */
+.container-fluid.page-container {
+  margin-top: 100px;
+}
+@media (max-width: 768px) {
+  .navbar { padding-top: .5rem; padding-bottom: .5rem; }
+  .navbar .navbar-brand span { font-size: 1rem; }
+  /* Override any generic container margin-tops with a more specific selector */
+  .container-fluid.page-container { margin-top: 70px !important; }
+}

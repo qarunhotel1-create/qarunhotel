@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-exchange-alt me-2"></i>نقل العميل
+                </h2>
+                <div>
+                    <a href="{{ url_for('booking.details', id=booking.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>العودة للحجز
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الحجز الحالي -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>معلومات الحجز الحالي
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>رقم الحجز:</strong> #{{ booking.booking_code or booking.id }}</p>
+                            <p><strong>العميل:</strong> {{ booking.customer.name }}</p>
+                            <p><strong>الغرفة الحالية:</strong> 
+                                <span class="badge bg-primary">{{ booking.room.room_number }}</span>
+                                - {{ booking.room.get_room_type_display() }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>نوع الحساب:</strong> 
+                                {% if booking.is_deus %}
+                                    <span class="badge bg-warning text-dark">ديوز</span>
+                                {% else %}
+                                    <span class="badge bg-success">عادي</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>تاريخ الوصول:</strong> {{ booking.check_in_date.strftime('%Y-%m-%d') }}</p>
+                            <p><strong>تاريخ المغادرة:</strong> {{ booking.check_out_date.strftime('%Y-%m-%d') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج النقل -->
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exchange-alt me-2"></i>تفاصيل النقل
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('room_transfer.execute_transfer', booking_id=booking.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- اختيار الغرفة الجديدة -->
+                        <div class="mb-3">
+                            {{ form.to_room_id.label(class="form-label") }}
+                            {{ form.to_room_id(class="form-select", id="to_room_id") }}
+                            {% if form.to_room_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.to_room_id.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- نوع الإقامة الجديد -->
+                        <div class="mb-3">
+                            {{ form.new_occupancy_type.label(class="form-label") }}
+                            {{ form.new_occupancy_type(class="form-select", id="new_occupancy_type") }}
+                            <small class="form-text text-muted">
+                                نوع الإقامة الحالي: <strong>{{ booking.occupancy_type.title() }}</strong>
+                            </small>
+                            {% if form.new_occupancy_type.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.new_occupancy_type.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- معاينة حساب السعر -->
+                        <div class="mb-3" id="price-preview" style="display: none;">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-calculator me-2"></i>معاينة حساب السعر
+                                    </h6>
+                                </div>
+                                <div class="card-body" id="price-details">
+                                    <!-- سيتم ملؤها بـ JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- سبب النقل -->
+                        <div class="mb-3">
+                            {{ form.reason.label(class="form-label") }}
+                            {{ form.reason(class="form-control") }}
+                            {% if form.reason.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.reason.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ملاحظات -->
+                        <div class="mb-3">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control") }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.notes.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- تحذير -->
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>تنبيه:</strong> سيتم نقل العميل فوراً من الغرفة الحالية إلى الغرفة الجديدة. 
+                            سيتم تسجيل وقت النقل وحساب المدة في كل غرفة.
+                        </div>
+
+                        <!-- أزرار التحكم -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('booking.details', id=booking.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>إلغاء
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- تاريخ النقل السابق -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history me-2"></i>تاريخ النقل السابق
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('room_transfer.transfer_history', booking_id=booking.id) }}"
+                       class="btn btn-outline-info">
+                        <i class="fas fa-eye me-2"></i>عرض تاريخ النقل الكامل
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تحديث قائمة الغرف المتاحة
+    const roomSelect = document.getElementById('to_room_id');
+    const occupancySelect = document.getElementById('new_occupancy_type');
+    const pricePreview = document.getElementById('price-preview');
+    const priceDetails = document.getElementById('price-details');
+
+    // بيانات الحجز الحالي
+    const currentBooking = {
+        occupancy_type: '{{ booking.occupancy_type }}',
+        check_in_date: '{{ booking.check_in_date.strftime("%Y-%m-%d") }}',
+        check_out_date: '{{ booking.check_out_date.strftime("%Y-%m-%d") }}',
+        total_price: {{ booking.total_price }},
+        is_deus: {{ 'true' if booking.is_deus else 'false' }}
+    };
+
+    // أسعار الإقامة
+    let prices;
+    const checkInDate = new Date(currentBooking.check_in_date);
+    const year = checkInDate.getFullYear();
+
+    if (year >= 2026) {
+        prices = {
+            normal: { single: 900, double: 1250, triple: 1500 },
+            deus: { single: 600, double: 800, triple: 1000 }
+        };
+    } else {
+        prices = {
+            normal: { single: 800, double: 1100, triple: 1400 },
+            deus: { single: 600, double: 800, triple: 1000 }
+        };
+    }
+
+    // حساب عدد الليالي المتبقية
+    function getRemainingNights() {
+        const today = new Date();
+        const checkOut = new Date(currentBooking.check_out_date);
+        const diffTime = checkOut - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return Math.max(0, diffDays);
+    }
+
+    // حساب السعر الجديد
+    function calculatePriceChange() {
+        const newOccupancy = occupancySelect.value;
+        if (!newOccupancy) return;
+
+        // استخدام الأسعار الجديدة دائماً
+        const oldPrice = prices.deus[currentBooking.occupancy_type] || 600;
+        const newPrice = prices.deus[newOccupancy] || 600;
+        const remainingNights = getRemainingNights();
+
+        // حساب الفرق في السعر والتعديل الكلي
+        const priceDifference = newPrice - oldPrice;
+        const totalAdjustment = priceDifference * remainingNights;
+        const newTotalPrice = (oldPrice * remainingNights) + totalAdjustment;
+
+        return {
+            oldOccupancy: currentBooking.occupancy_type,
+            newOccupancy: newOccupancy,
+            oldPrice: oldPrice,
+            newPrice: newPrice,
+            remainingNights: remainingNights,
+            priceDifference: priceDifference,
+            totalAdjustment: totalAdjustment,
+            newTotalPrice: newTotalPrice
+        };
+    }
+
+    // عرض تفاصيل السعر
+    function updatePricePreview() {
+        const calc = calculatePriceChange();
+        if (!calc) {
+            pricePreview.style.display = 'none';
+            return;
+        }
+
+        let adjustmentText = '';
+        let adjustmentClass = '';
+
+        if (calc.totalAdjustment > 0) {
+            adjustmentText = `+${calc.totalAdjustment} جنيه (إضافة)`;
+            adjustmentClass = 'text-danger';
+        } else if (calc.totalAdjustment < 0) {
+            adjustmentText = `${calc.totalAdjustment} جنيه (خصم)`;
+            adjustmentClass = 'text-success';
+        } else {
+            adjustmentText = 'لا يوجد تعديل';
+            adjustmentClass = 'text-muted';
+        }
+
+        priceDetails.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>نوع الإقامة:</strong> ${calc.oldOccupancy.toUpperCase()} → ${calc.newOccupancy.toUpperCase()}</p>
+                    <p><strong>سعر الليلة:</strong> ${calc.oldPrice} → ${calc.newPrice} جنيه</p>
+                    <p><strong>الليالي المتبقية:</strong> ${calc.remainingNights} ليلة</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>فرق السعر/ليلة:</strong> ${calc.priceDifference > 0 ? '+' : ''}${calc.priceDifference} جنيه</p>
+                    <p><strong>إجمالي التعديل:</strong> <span class="${adjustmentClass}">${adjustmentText}</span></p>
+                    <p><strong>إجمالي الحساب الجديد:</strong> <span class="fw-bold">${calc.newTotalPrice} جنيه</span></p>
+                </div>
+            </div>
+        `;
+
+        pricePreview.style.display = 'block';
+    }
+
+    // إضافة event listeners
+    occupancySelect.addEventListener('change', updatePricePreview);
+
+    // تعيين القيمة الافتراضية لنوع الإقامة
+    occupancySelect.value = currentBooking.occupancy_type;
+
+    if (roomSelect && roomSelect.options.length <= 1) {
+        roomSelect.innerHTML = '<option value="">لا توجد غرف متاحة</option>';
+        document.querySelector('button[type="submit"]').disabled = true;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-history me-2"></i>تاريخ نقل العميل
+                </h2>
+                <div>
+                    <a href="{{ url_for('booking.details', id=booking.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>العودة للحجز
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الحجز -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>معلومات الحجز
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>رقم الحجز:</strong> #{{ booking.booking_code or booking.id }}</p>
+                            <p><strong>العميل:</strong> {{ booking.customer.name }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>الغرفة الحالية:</strong> 
+                                <span class="badge bg-primary">{{ booking.room.room_number }}</span>
+                            </p>
+                            <p><strong>نوع الحساب:</strong> 
+                                {% if booking.is_deus %}
+                                    <span class="badge bg-warning text-dark">ديوز</span>
+                                {% else %}
+                                    <span class="badge bg-success">عادي</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>تاريخ الوصول:</strong> {{ booking.check_in_date.strftime('%Y-%m-%d') }}</p>
+                            <p><strong>تاريخ المغادرة:</strong> {{ booking.check_out_date.strftime('%Y-%m-%d') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- تاريخ النقل -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exchange-alt me-2"></i>سجل النقل
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if transfers %}
+                        <div class="timeline">
+                            {% for transfer in transfers %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-primary">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">
+                                                    نقل من غرفة {{ transfer.from_room.room_number }} 
+                                                    إلى غرفة {{ transfer.to_room.room_number }}
+                                                </h6>
+                                                <small class="text-muted">{{ transfer.transfer_time_display }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <p><strong>المدة في الغرفة السابقة:</strong>
+                                                        <span class="badge bg-info">{{ transfer.from_room_duration_display }}</span>
+                                                    </p>
+                                                    {% if transfer.old_occupancy_type and transfer.new_occupancy_type %}
+                                                    <p><strong>تغيير نوع الإقامة:</strong>
+                                                        <span class="badge bg-secondary">{{ transfer.old_occupancy_type.upper() }}</span>
+                                                        <i class="fas fa-arrow-right mx-2"></i>
+                                                        <span class="badge bg-primary">{{ transfer.new_occupancy_type.upper() }}</span>
+                                                    </p>
+                                                    {% endif %}
+                                                    {% if transfer.transfer_reason %}
+                                                    <p><strong>سبب النقل:</strong> {{ transfer.transfer_reason }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {% if transfer.old_price_per_night and transfer.new_price_per_night %}
+                                                    <p><strong>تغيير السعر:</strong>
+                                                        {{ transfer.old_price_per_night }} → {{ transfer.new_price_per_night }} جنيه/ليلة
+                                                    </p>
+                                                    <p><strong>الليالي المتبقية:</strong> {{ transfer.remaining_nights }} ليلة</p>
+                                                    {% if transfer.total_adjustment %}
+                                                    <p><strong>تعديل الحساب:</strong>
+                                                        {% if transfer.total_adjustment > 0 %}
+                                                            <span class="text-danger">+{{ transfer.total_adjustment }} جنيه</span>
+                                                        {% elif transfer.total_adjustment < 0 %}
+                                                            <span class="text-success">{{ transfer.total_adjustment }} جنيه</span>
+                                                        {% else %}
+                                                            <span class="text-muted">لا يوجد تعديل</span>
+                                                        {% endif %}
+                                                    </p>
+                                                    {% endif %}
+                                                    {% endif %}
+                                                    <p><strong>تم النقل بواسطة:</strong>
+                                                        {% if transfer.transferred_by_user %}
+                                                            {{ transfer.transferred_by_user.username }}
+                                                        {% else %}
+                                                            {{ transfer.transferred_by or 'غير محدد' }}
+                                                        {% endif %}
+                                                    </p>
+                                                    {% if transfer.notes %}
+                                                    <p><strong>ملاحظات:</strong> {{ transfer.notes }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exchange-alt text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted mt-3">لا يوجد تاريخ نقل</h4>
+                            <p class="text-muted">لم يتم نقل هذا العميل من غرفة لأخرى بعد</p>
+                            {% if booking.status == 'checked_in' %}
+                            <a href="{{ url_for('room_transfer.transfer_form', booking_id=booking.id) }}"
+                               class="btn btn-primary mt-2">
+                                <i class="fas fa-exchange-alt me-2"></i>نقل العميل
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ملخص الإقامة -->
+    {% if transfers %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>ملخص الإقامة
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>الغرف التي أقام بها:</h6>
+                            <ul class="list-unstyled">
+                                {% for transfer in transfers %}
+                                <li>
+                                    <i class="fas fa-bed me-2"></i>
+                                    غرفة {{ transfer.from_room.room_number }} - {{ transfer.from_room_duration_display }}
+                                </li>
+                                {% endfor %}
+                                <li>
+                                    <i class="fas fa-bed me-2 text-primary"></i>
+                                    غرفة {{ booking.room.room_number }} - <span class="text-primary">حالياً</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>إحصائيات:</h6>
+                            <p><strong>عدد مرات النقل:</strong> {{ transfers|length }}</p>
+                            <p><strong>إجمالي الغرف:</strong> {{ transfers|length + 1 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
+.timeline-content {
+    margin-left: 20px;
+}
+</style>
+{% endblock %}

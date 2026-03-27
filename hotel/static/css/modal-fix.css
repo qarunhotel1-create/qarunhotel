@@ -1,0 +1,330 @@
+/* ===== إصلاح شامل لمشاكل Modal في النظام ===== */
+
+/* إصلاح z-index للـ modals */
+.modal {
+    z-index: 10500 !important;
+}
+
+.modal-backdrop {
+    z-index: 10499 !important;
+    opacity: 0.5 !important;
+}
+
+.modal-dialog {
+    z-index: 10501 !important;
+    position: relative !important;
+}
+
+.modal-content {
+    z-index: 10502 !important;
+    position: relative !important;
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    z-index: 10503 !important;
+    position: relative !important;
+}
+
+/* إصلاح الأزرار في Modal */
+.modal .btn {
+    z-index: 10504 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    background-color: inherit !important;
+    border: inherit !important;
+    color: inherit !important;
+}
+
+.modal .btn:hover {
+    z-index: 10505 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.modal .btn:focus {
+    z-index: 10505 !important;
+    pointer-events: auto !important;
+}
+
+.modal .btn:active {
+    z-index: 10505 !important;
+    pointer-events: auto !important;
+}
+
+/* إصلاح أزرار الإغلاق */
+.modal .btn-close {
+    z-index: 10505 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* إصلاح عناصر الإدخال */
+.modal input,
+.modal select,
+.modal textarea {
+    z-index: 10504 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+}
+
+.modal input[type="file"] {
+    z-index: 10504 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* إصلاح مناطق الرفع */
+.modal .upload-area {
+    z-index: 10503 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.modal .upload-area:hover {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* إصلاح جميع العناصر داخل Modal */
+.modal * {
+    pointer-events: auto !important;
+}
+
+/* إصلاح خاص للأزرار المحددة */
+#addDocumentsModal .btn,
+#previewModal .btn,
+#editModal .btn,
+#deleteModal .btn,
+#confirmModal .btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10504 !important;
+    position: relative !important;
+}
+
+/* إصلاح أزرار الـ footer */
+.modal-footer .btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10505 !important;
+    position: relative !important;
+}
+
+/* إصلاح أزرار الرفع والمسح */
+#modalUploadBtn,
+#modalScanBtn,
+#modalMultiScanBtn,
+#modalPrinterScanBtn,
+#saveDocumentsBtn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10504 !important;
+    position: relative !important;
+    background: #198754 !important;
+    border: none !important;
+    color: white !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.375rem !important;
+}
+
+#modalUploadBtn:hover,
+#modalScanBtn:hover,
+#modalMultiScanBtn:hover,
+#modalPrinterScanBtn:hover,
+#saveDocumentsBtn:hover {
+    background: #157347 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* إصلاح backdrop */
+.modal-backdrop.show {
+    opacity: 0.5 !important;
+    z-index: 10499 !important;
+}
+
+/* التأكد من ظهور Modal بشكل صحيح */
+.modal.show {
+    display: block !important;
+    z-index: 10500 !important;
+}
+
+.modal.show .modal-dialog {
+    transform: none !important;
+}
+
+/* إصلاح مشاكل النقر والتفاعل */
+.modal-content,
+.modal-content * {
+    pointer-events: auto !important;
+}
+
+/* إصلاح خاص للروابط */
+.modal a {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10504 !important;
+    position: relative !important;
+}
+
+/* إصلاح خاص للأيقونات */
+.modal i {
+    pointer-events: auto !important;
+    z-index: 10504 !important;
+}
+
+/* إصلاح خاص للنصوص */
+.modal .modal-title,
+.modal .modal-body,
+.modal .modal-footer {
+    pointer-events: auto !important;
+    z-index: 10503 !important;
+}
+
+/* إصلاح مشاكل التمرير */
+.modal-body {
+    overflow-y: auto !important;
+    max-height: calc(100vh - 200px) !important;
+}
+
+/* إصلاح مشاكل الـ focus */
+.modal .btn:focus,
+.modal input:focus,
+.modal select:focus,
+.modal textarea:focus {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 2px !important;
+    z-index: 10505 !important;
+}
+
+/* إصلاح مشاكل الـ dropdown في Modal */
+.modal .dropdown-menu {
+    z-index: 10506 !important;
+    position: absolute !important;
+}
+
+/* إصلاح مشاكل الـ tooltip في Modal */
+.modal .tooltip {
+    z-index: 10507 !important;
+}
+
+/* إصلاح مشاكل الـ popover في Modal */
+.modal .popover {
+    z-index: 10507 !important;
+}
+
+/* إصلاح خاص للجداول في Modal */
+.modal table,
+.modal .table {
+    pointer-events: auto !important;
+}
+
+.modal table td,
+.modal table th,
+.modal .table td,
+.modal .table th {
+    pointer-events: auto !important;
+}
+
+/* إصلاح خاص للبطاقات في Modal */
+.modal .card {
+    pointer-events: auto !important;
+    z-index: 10503 !important;
+}
+
+.modal .card-header,
+.modal .card-body,
+.modal .card-footer {
+    pointer-events: auto !important;
+}
+
+/* إصلاح خاص للتبويبات في Modal */
+.modal .nav-tabs,
+.modal .nav-pills {
+    pointer-events: auto !important;
+}
+
+.modal .nav-link {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10504 !important;
+}
+
+/* إصلاح خاص للـ accordion في Modal */
+.modal .accordion {
+    pointer-events: auto !important;
+}
+
+.modal .accordion-button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10504 !important;
+}
+
+/* إصلاح مشاكل الـ animation */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out !important;
+}
+
+.modal.show .modal-dialog {
+    transform: none !important;
+}
+
+/* إصلاح مشاكل الـ responsive */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0.5rem !important;
+        max-width: calc(100% - 1rem) !important;
+    }
+}
+
+/* إصلاح مشاكل الطباعة */
+@media print {
+    .modal {
+        display: none !important;
+    }
+    
+    .modal-backdrop {
+        display: none !important;
+    }
+}
+
+/* إصلاح خاص للـ dark mode */
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background-color: #212529 !important;
+        color: #fff !important;
+    }
+    
+    .modal-header {
+        border-bottom-color: #495057 !important;
+    }
+    
+    .modal-footer {
+        border-top-color: #495057 !important;
+    }
+}
+
+/* إصلاح نهائي للتأكد من عمل جميع العناصر */
+.modal,
+.modal *,
+.modal *:before,
+.modal *:after {
+    pointer-events: auto !important;
+}
+
+/* استثناءات للعناصر التي لا يجب أن تكون قابلة للنقر */
+.modal .modal-backdrop {
+    pointer-events: auto !important;
+}
+
+.modal .disabled,
+.modal [disabled] {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}

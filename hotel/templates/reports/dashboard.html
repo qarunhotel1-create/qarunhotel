@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<style>
+    .stats-card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    
+    .progress-custom {
+        height: 8px;
+        border-radius: 10px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-5 text-gradient fw-bold mb-3">
+            <i class="fas fa-tachometer-alt me-3"></i>لوحة تحكم التقارير
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">الرئيسية</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">التقارير</a></li>
+                <li class="breadcrumb-item active">لوحة التحكم</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- الإحصائيات العامة -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.general.total_users }}</div>
+                <div>إجمالي المستخدمين</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-door-open fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.general.total_rooms }}</div>
+                <div>إجمالي الغرف</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-user-friends fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.general.total_customers }}</div>
+                <div>إجمالي العملاء</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+        <div class="card stats-card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check fa-2x mb-3"></i>
+                <div class="stats-number">{{ stats.general.total_bookings }}</div>
+                <div>إجمالي الحجوزات</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات الحجوزات -->
+<div class="row mb-5">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>إحصائيات الحجوزات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-success">{{ stats.bookings.active }}</div>
+                            <small class="text-muted">حجوزات نشطة</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-warning">{{ stats.bookings.pending }}</div>
+                            <small class="text-muted">في الانتظار</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-primary">{{ stats.bookings.confirmed }}</div>
+                            <small class="text-muted">مؤكدة</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-danger">{{ stats.bookings.cancelled }}</div>
+                            <small class="text-muted">ملغية</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>الحجوزات هذا الشهر</h6>
+                        <div class="h3 text-info">{{ stats.bookings.monthly }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ url_for('reports.bookings_report') }}" class="btn btn-primary">
+                            <i class="fas fa-chart-line me-2"></i>تقرير مفصل
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bed me-2"></i>حالة الغرف
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>متاحة</span>
+                        <span class="text-success">{{ stats.rooms.available }}</span>
+                    </div>
+                    <div class="progress progress-custom">
+                        <div class="progress-bar bg-success" style="width: {{ (stats.rooms.available / stats.rooms.total * 100) if stats.rooms.total > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>مشغولة</span>
+                        <span class="text-danger">{{ stats.rooms.occupied }}</span>
+                    </div>
+                    <div class="progress progress-custom">
+                        <div class="progress-bar bg-danger" style="width: {{ (stats.rooms.occupied / stats.rooms.total * 100) if stats.rooms.total > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>صيانة</span>
+                        <span class="text-warning">{{ stats.rooms.maintenance }}</span>
+                    </div>
+                    <div class="progress progress-custom">
+                        <div class="progress-bar bg-warning" style="width: {{ (stats.rooms.maintenance / stats.rooms.total * 100) if stats.rooms.total > 0 else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <h6>معدل الإشغال</h6>
+                    <div class="h4 text-primary">{{ "%.1f"|format((stats.rooms.occupied / stats.rooms.total * 100) if stats.rooms.total > 0 else 0) }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- روابط سريعة للتقارير -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>روابط سريعة للتقارير
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <a href="{{ url_for('reports.bookings_report') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-calendar-check d-block mb-1"></i>
+                            الحجوزات
+                        </a>
+                    </div>
+
+                    <div class="col-md-2">
+                        <a href="{{ url_for('reports.rooms_report') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-door-open d-block mb-1"></i>
+                            الغرف
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('reports.customers_report') }}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-users d-block mb-1"></i>
+                            العملاء
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('reports.users_report') }}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-user-shield d-block mb-1"></i>
+                            المستخدمين
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-dark w-100">
+                            <i class="fas fa-chart-bar d-block mb-1"></i>
+                            جميع التقارير
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تم إزالة التأثيرات المتحركة - البطاقات مرئية دائماً
+        console.log('✅ تم تحميل لوحة التقارير - بدون تأثيرات متحركة');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% set display_bookings = filtered_bookings if filtered_bookings is defined else bookings.items %}
+
+{% if display_bookings|length > 0 %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th class="fw-bold">#</th>
+                <th class="fw-bold">العميل</th>
+                <th class="fw-bold">الغرفة</th>
+                <th class="fw-bold">تاريخ الوصول</th>
+                <th class="fw-bold">تاريخ المغادرة</th>
+                <th class="fw-bold">المدة</th>
+                <th class="fw-bold">نوع الحجز</th>
+                <th class="fw-bold">نوع الحساب</th>
+                <th class="fw-bold">الحالة</th>
+                <th class="fw-bold">السعر الإجمالي</th>
+                <th class="fw-bold">حالة الدفع</th>
+                <th class="fw-bold">الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in display_bookings %}
+            <tr class="fade-in">
+                <td class="fw-semibold">#{{ booking.booking_code or booking.id }}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-gradient-primary text-white rounded-circle p-1 me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {{ booking.customer.full_name }}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-secondary">{{ booking.room.room_number }}</span>
+                </td>
+                <td>
+                    {{ booking.check_in_date|egypt_date }}
+                    <br><small class="text-success">1:00 مساءً</small>
+                </td>
+                <td>
+                    {{ booking.check_out_date|egypt_date }}
+                    <br><small class="text-danger">12:00 مساءً</small>
+                </td>
+                <td>
+                    <span class="badge bg-info">{{ (booking.check_out_date - booking.check_in_date).days }} ليلة</span>
+                </td>
+                <td>
+                    {% if booking.occupancy_type == 'single' %}
+                        <span class="badge bg-primary">Single</span>
+                    {% elif booking.occupancy_type == 'double' %}
+                        <span class="badge bg-info">Double</span>
+                    {% elif booking.occupancy_type == 'triple' %}
+                        <span class="badge bg-secondary">Triple</span>
+                    {% else %}
+                        <span class="badge bg-light text-dark">{{ booking.occupancy_type }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if booking.is_deus %}
+                        <span class="badge bg-warning text-dark">ديوز</span>
+                    {% else %}
+                        <span class="badge bg-success">عادي</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if booking.status == 'pending' %}
+                        <span class="badge bg-warning">قيد الانتظار</span>
+                    {% elif booking.status == 'confirmed' %}
+                        <span class="badge bg-primary">مؤكد</span>
+                    {% elif booking.status == 'checked_in' %}
+                        <span class="badge bg-success">تم تسجيل الدخول</span>
+                    {% elif booking.status == 'checked_out' %}
+                        <span class="badge bg-secondary">تم تسجيل الخروج</span>
+                    {% elif booking.status == 'cancelled' %}
+                        <span class="badge bg-danger">ملغي</span>
+                    {% endif %}
+                </td>
+                <td class="fw-semibold text-success">{{ booking.total_price }} جنيه</td>
+                <td>
+                    {% if booking.is_fully_paid %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check me-1"></i>مدفوع بالكامل
+                        </span>
+                    {% elif booking.paid_amount and booking.paid_amount > 0 %}
+                        <span class="badge bg-warning">
+                            <i class="fas fa-clock me-1"></i>دفع جزئي
+                        </span>
+                        <small class="d-block text-muted mt-1">{{ booking.paid_amount }}/{{ booking.total_price }} جنيه</small>
+                    {% else %}
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times me-1"></i>غير مدفوع
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('booking.details', id=booking.id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="عرض التفاصيل">
+                            <i class="fas fa-eye"></i>
+                        </a>
+
+                        {% if current_user.can_edit_booking() and booking.status in ['pending', 'confirmed'] %}
+                        <a href="{{ url_for('booking.edit', id=booking.id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="تعديل الحجز">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.can_add_payment() and not booking.is_fully_paid %}
+                        <a href="{{ url_for('payment.add_payment', booking_id=booking.id) }}" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="إضافة دفعة">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.can_edit_booking() and booking.status in ['pending', 'confirmed'] %}
+                        <button type="button" class="btn btn-sm btn-danger" onclick="cancelBookingSimple({{ booking.id }})" title="إلغاء الحجز">
+                            <i class="fas fa-times"></i>
+                        </button>
+
+                        <!-- Hidden Cancel Form -->
+                        <form id="cancelForm{{ booking.id }}" action="{{ url_for('booking.cancel', id=booking.id) }}" method="POST" style="display: none;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        </form>
+                        {% endif %}
+
+                        {% if current_user.can_edit_booking() %}
+                            {% if booking.status == 'pending' %}
+                            <form action="{{ url_for('booking.confirm', id=booking.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="تأكيد الحجز">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if current_user.can_check_in_out() %}
+                            {% if booking.status == 'confirmed' %}
+                            <form action="{{ url_for('booking.check_in', id=booking.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="تسجيل الدخول">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </button>
+                            </form>
+                            {% elif booking.status == 'checked_in' %}
+                            <form action="{{ url_for('booking.check_out', id=booking.id) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-secondary" data-bs-toggle="tooltip" title="تسجيل الخروج">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-5">
+    {% if request.args.get('search') or request.args.get('status') %}
+        <i class="fas fa-search text-muted" style="font-size: 4rem;"></i>
+        <h4 class="text-muted mt-3">لا توجد نتائج للبحث</h4>
+        <p class="text-muted">لم يتم العثور على حجوزات تطابق معايير البحث المحددة</p>
+        <a href="{{ url_for('booking.index') }}" class="btn btn-secondary mt-2">
+            <i class="fas fa-times me-2"></i>إلغاء البحث
+        </a>
+    {% else %}
+        <i class="fas fa-calendar-times text-muted" style="font-size: 4rem;"></i>
+        <h4 class="text-muted mt-3">لا توجد حجوزات</h4>
+        <p class="text-muted">لا توجد حجوزات في هذه القائمة حالياً</p>
+        <a href="{{ url_for('booking.create') }}" class="btn btn-primary mt-2">
+            <i class="fas fa-plus me-2"></i>إضافة حجز جديد
+        </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+// حل بسيط جداً - استخدام confirm بدلاً من modal
+function cancelBookingSimple(bookingId) {
+    // رسالة تأكيد بسيطة وواضحة
+    const confirmed = confirm(
+        'هل أنت متأكد من رغبتك في إلغاء هذا الحجز؟\n\n' +
+        'رقم الحجز: ' + bookingId + '\n\n' +
+        'لا يمكن التراجع عن هذا الإجراء.\n\n' +
+        'اضغط "موافق" للتأكيد أو "إلغاء" للتراجع.'
+    );
+
+    if (confirmed) {
+        // إرسال النموذج مباشرة
+        const form = document.getElementById('cancelForm' + bookingId);
+        if (form) {
+            form.submit();
+        } else {
+            alert('حدث خطأ في إلغاء الحجز. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+        }
+    }
+}
+</script>
+
+

@@ -1,0 +1,83 @@
+{% extends 'base_auth.html' %}
+
+{% block content %}
+<main class="auth-page container-fluid px-0">
+  <div class="row g-0 min-vh-100 align-items-start align-items-md-center">
+
+    <!-- Form pane (50%) - LEFT -->
+    <div class="col-6 d-flex">
+      <section class="form-pane d-flex align-items-center flex-fill py-4 py-md-5">
+        <div class="container-fluid px-4">
+          <div class="row justify-content-center">
+            <div class="col-12 col-sm-11 col-md-10 col-lg-9 col-xl-8">
+              <article class="auth-card p-4 p-md-5" role="form" aria-labelledby="loginTitle">
+                <header class="auth-head text-center mb-4">
+                  <h1 id="loginTitle" class="mb-1 gradient-text">تسجيل الدخول</h1>
+                  <p class="text-muted small mb-0">مرحباً بك، يرجى تسجيل الدخول للمتابعة</p>
+                </header>
+
+                {% include 'includes/flash_messages.html' %}
+
+                <form method="POST" action="{{ url_for('auth.login') }}" novalidate autocomplete="on">
+                  {{ form.hidden_tag() }}
+
+                  <div class="mb-3">
+                    {{ form.username.label(class="form-label text-light", for="username") }}
+                    {{ form.username(class="form-control auth-input", id="username", placeholder="اسم المستخدم", autocomplete="username", autofocus=True) }}
+                    {% for error in form.username.errors %}
+                      <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+
+                  <div class="mb-3">
+                    {{ form.password.label(class="form-label text-light", for="password") }}
+                    {{ form.password(class="form-control auth-input", id="password", placeholder="كلمة المرور", autocomplete="current-password") }}
+                    {% for error in form.password.errors %}
+                      <div class="text-danger small mt-1">{{ error }}</div>
+                    {% endfor %}
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check">
+                      {{ form.remember_me(class="form-check-input", id="remember_me") }}
+                      <label class="form-check-label text-light" for="remember_me">{{ form.remember_me.label.text }}</label>
+                    </div>
+                    <span class="small text-muted">&nbsp;</span>
+                  </div>
+
+                  <button type="submit" class="btn auth-btn auth-btn-primary w-100">
+                    <i class="fas fa-right-to-bracket ms-2"></i>
+                    دخول
+                  </button>
+                </form>
+              </article>
+              <footer class="text-center text-muted small mt-3 mb-0">© {{ now.year }} QARUN HOTEL</footer>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Brand/Info pane (50%) - RIGHT -->
+    <div class="col-6 d-flex">
+      <aside class="brand-pane flex-fill d-flex">
+        <div class="brand-content text-center text-light flex-fill">
+          <i class="fas fa-hotel brand-icon gradient-icon mb-3"></i>
+          <h2 class="brand-title gradient-text mb-0">QARUN HOTEL</h2>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // منع النقر المزدوج على زر الدخول
+  document.addEventListener('submit', function (e) {
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; setTimeout(() => btn.disabled = false, 1800); }
+  });
+</script>
+{% endblock %}

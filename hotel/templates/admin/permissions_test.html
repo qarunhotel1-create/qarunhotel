@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-shield-alt me-2"></i>اختبار نظام الصلاحيات
+            </h2>
+        </div>
+    </div>
+
+    <!-- معلومات المستخدم الحالي -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>المستخدم الحالي
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>اسم المستخدم:</strong> {{ current_user.username }}</p>
+                            <p><strong>الاسم الكامل:</strong> {{ current_user.full_name }}</p>
+                            <p><strong>الدور:</strong> 
+                                <span class="badge bg-{{ current_user.get_role_color() }}">
+                                    {{ current_user.get_role_display_name() }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>الصلاحيات المعطاة:</strong></p>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for permission in current_user.permissions %}
+                                    <span class="badge bg-info">{{ permission.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- اختبار الصلاحيات -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>اختبار الصلاحيات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>صلاحيات الحجوزات:</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    {% if current_user.can_create_booking() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    إنشاء حجز جديد
+                                </li>
+                                <li>
+                                    {% if current_user.can_edit_booking() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    تعديل الحجوزات
+                                </li>
+                                <li>
+                                    {% if current_user.can_check_in_out() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    تسجيل الدخول والخروج
+                                </li>
+                                <li>
+                                    {% if current_user.can_delete_booking() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    حذف الحجوزات
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>صلاحيات المدفوعات:</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    {% if current_user.can_add_payment() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    إضافة دفعة جديدة
+                                </li>
+                                <li>
+                                    {% if current_user.can_edit_payment() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    تعديل الدفعات
+                                </li>
+                                <li>
+                                    {% if current_user.can_delete_payment() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    حذف الدفعات
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>صلاحيات أخرى:</h6>
+                            <ul class="list-unstyled">
+                                <li>
+                                    {% if current_user.can_manage_customers() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    إدارة العملاء
+                                </li>
+                                <li>
+                                    {% if current_user.can_manage_rooms() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    إدارة الغرف
+                                </li>
+                                <li>
+                                    {% if current_user.can_view_reports() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    عرض التقارير
+                                </li>
+                                <li>
+                                    {% if current_user.can_manage_users() %}
+                                        <i class="fas fa-check text-success me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-times text-danger me-2"></i>
+                                    {% endif %}
+                                    إدارة المستخدمين
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>اختبار الروابط:</h6>
+                            <div class="d-grid gap-2">
+                                {% if current_user.can_create_booking() %}
+                                    <a href="{{ url_for('booking.create') }}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-plus me-1"></i>إنشاء حجز جديد
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-sm btn-secondary" disabled>
+                                        <i class="fas fa-ban me-1"></i>إنشاء حجز جديد (غير مسموح)
+                                    </button>
+                                {% endif %}
+                                
+                                {% if current_user.can_view_reports() %}
+                                    <a href="{{ url_for('reports.index') }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-chart-bar me-1"></i>عرض التقارير
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-sm btn-secondary" disabled>
+                                        <i class="fas fa-ban me-1"></i>عرض التقارير (غير مسموح)
+                                    </button>
+                                {% endif %}
+                                
+                                {% if current_user.can_manage_users() %}
+                                    <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-users me-1"></i>إدارة المستخدمين
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-sm btn-secondary" disabled>
+                                        <i class="fas fa-ban me-1"></i>إدارة المستخدمين (غير مسموح)
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات تسجيل الدخول -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>معلومات تسجيل الدخول
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>👑 مسؤول النظام:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>اسم المستخدم:</strong> admin</li>
+                                <li><strong>كلمة المرور:</strong> admin</li>
+                                <li><strong>الصلاحيات:</strong> جميع الصلاحيات</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>👤 مستخدم تجريبي:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>اسم المستخدم:</strong> test_user</li>
+                                <li><strong>كلمة المرور:</strong> test123</li>
+                                <li><strong>الصلاحيات:</strong> إدارة الحجوزات والمدفوعات</li>
+                            </ul>
+                            <a href="{{ url_for('admin.create_test_user') }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-flask me-1"></i>إنشاء مستخدم تجريبي
+                            </a>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>لاختبار الصلاحيات:</strong> سجل خروج ثم سجل دخول بالمستخدم التجريبي لترى الفرق في الصلاحيات
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- العودة -->
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>العودة إلى لوحة التحكم
+            </a>
+            <a href="{{ url_for('admin.permissions_comparison') }}" class="btn btn-info ms-2">
+                <i class="fas fa-balance-scale me-1"></i>مقارنة الصلاحيات
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-warning ms-2">
+                <i class="fas fa-sign-out-alt me-1"></i>تسجيل الخروج
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

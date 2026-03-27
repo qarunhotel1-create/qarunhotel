@@ -1,0 +1,42 @@
+# Virtual environments
+.venv/
+venv/
+Python311/
+env/
+
+# Build and dist
+build/
+dist/
+*.spec
+*.exe
+
+# Python caches
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+
+# VS Code / IDE settings
+.vscode/
+.vs/
+.idea/
+
+# Flask/Instance files
+# We include instance/ because the user explicitly wants the same database
+!instance/
+!instance/hotel.db
+!instance/backup_hotel_before_role.db
+
+# Other junk
+*.log
+.snapshots/
+.zencoder/
+ASDASD@IT009#/
+*.zip
+*.pdf
+dir_test.txt
+log_analysis.txt
+log_report.txt
+migration_result.txt
+python_installer.exe
+gtk3-runtime-installer.exe
