@@ -315,7 +315,6 @@ def process_customer_documents(customer, request):
         print("[DEBUG] Content-Type:", request.content_type)
         print("[DEBUG] request.files.keys():", list(request.files.keys()))
         print("[DEBUG] request.form.keys():", list(request.form.keys()))
-        print("[DEBUG] Request form content:", dict(request.form))
         print("[DEBUG] Uploaded files:", list(request.files.keys()))
         uploaded_files = request.files.getlist('document_files')
         print(f"[DEBUG] Number of uploaded_files (document_files): {len(uploaded_files)}")
