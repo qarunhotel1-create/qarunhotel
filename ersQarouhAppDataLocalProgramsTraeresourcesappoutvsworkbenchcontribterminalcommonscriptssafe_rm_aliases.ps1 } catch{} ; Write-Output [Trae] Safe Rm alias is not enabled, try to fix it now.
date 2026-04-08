@@ -1,0 +1,29 @@
+[33mcommit 7aae3b60d0c45590e430091c84007bddd35f06c0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Qarun Hotel <hotel@qarun.com>
+Date:   Sun Mar 29 00:10:46 2026 +0200
+
+    Fix Errno 90 Message too long by removing large form print
+
+[33mcommit 6065c73f1ade3d14378ad42f5ba9dcaba606fb06[m
+Author: Qarun Hotel <hotel@qarun.com>
+Date:   Sat Mar 28 01:39:08 2026 +0200
+
+    Add gunicorn for deployment
+
+[33mcommit 0de2e266222635f13077e1315f5814790be26a44[m
+Author: Qarun Hotel <hotel@qarun.com>
+Date:   Sat Mar 28 01:35:30 2026 +0200
+
+    Add one-click deployment for a working link
+
+[33mcommit cc202bf9c232877bfc47c83a0c1498462b5c6fda[m
+Author: Qarun Hotel <hotel@qarun.com>
+Date:   Sat Mar 28 01:28:32 2026 +0200
+
+    Configure GitHub Codespaces for easy online usage
+
+[33mcommit 9aca80f8d7fd3d0dfb3425df25ad2ab6c83dde2b[m
+Author: Qarun Hotel <hotel@qarun.com>
+Date:   Sat Mar 28 01:16:03 2026 +0200
+
+    Add index.html for GitHub Pages visibility

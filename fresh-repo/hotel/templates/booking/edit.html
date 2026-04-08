@@ -1,0 +1,475 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4">
+            <i class="fas fa-edit me-2"></i>تعديل الحجز #{{ booking.booking_code or booking.id }}
+        </h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">الرئيسية</a></li>
+                {% if current_user.is_admin() %}
+                <li class="breadcrumb-item"><a href="{{ url_for('booking.index') }}">الحجوزات</a></li>
+                {% else %}
+                <li class="breadcrumb-item"><a href="{{ url_for('booking.my_bookings') }}">حجوزاتي</a></li>
+                {% endif %}
+                <li class="breadcrumb-item"><a href="{{ url_for('booking.details', id=booking.id) }}">تفاصيل الحجز #{{ booking.booking_code or booking.id }}</a></li>
+                <li class="breadcrumb-item active">تعديل الحجز</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- تحذير للحجوزات في حالات متقدمة -->
+{% if booking.status in ['checked_in', 'checked_out'] %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>تحذير:</strong>
+            هذا الحجز في حالة "{{ booking.get_status_display() }}".
+            تعديل الحجز في هذه الحالة قد يؤثر على البيانات المالية والتقارير.
+            يرجى التأكد من صحة التعديلات قبل الحفظ.
+        </div>
+    </div>
+</div>
+{% elif booking.status == 'cancelled' %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>ملاحظة:</strong>
+            هذا الحجز ملغي. يمكنك تعديله وإعادة تفعيله إذا لزم الأمر.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>تعديل بيانات الحجز
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.room_id.label(class="form-label") }}
+                            {{ form.room_id(class="form-select") }}
+                            {% if form.room_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.room_id.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if current_user.is_admin() %}
+                        <div class="col-md-6 mb-3">
+                            {{ form.customer_search.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.customer_search(class="form-control", id="customerSearchInput") }}
+                                <button type="button" class="btn btn-outline-secondary" id="clearCustomerBtn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            {{ form.customer_id() }}
+                            {% if form.customer_search.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.customer_search.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                ابحث عن العميل بالاسم أو رقم الهوية أو الهاتف
+                            </small>
+
+                            <!-- العميل المحدد -->
+                            <div id="selectedCustomerCard" class="mt-2" style="display: none;">
+                                <div class="card border-success">
+                                    <div class="card-body p-2">
+                                        <h6 class="mb-1 text-success">
+                                            <i class="fas fa-user-check me-1"></i>العميل المحدد
+                                        </h6>
+                                        <div id="selectedCustomerInfo">
+                                            <!-- سيتم ملء المعلومات هنا -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- نتائج البحث -->
+                            <div id="searchResults" class="mt-2" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header p-2">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-search me-1"></i>نتائج البحث
+                                        </h6>
+                                    </div>
+                                    <div class="card-body p-2" id="searchResultsList">
+                                        <!-- سيتم ملء النتائج هنا -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        {{ form.customer_id(type="hidden") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.check_in_date.label(class="form-label") }}
+                            {{ form.check_in_date(class="form-control", type="date") }}
+                            {% if form.check_in_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.check_in_date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.check_out_date.label(class="form-label") }}
+                            {{ form.check_out_date(class="form-control", type="date") }}
+                            {% if form.check_out_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.check_out_date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- نوع الإقامة -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.occupancy_type.label(class="form-label") }}
+                            {{ form.occupancy_type(class="form-select") }}
+                            {% if form.occupancy_type.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.occupancy_type.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form.discount_percentage.label(class="form-label") }}
+                            <div class="input-group mb-1">
+                                {{ form.discount_percentage(class="form-control", step="0.01", min="0", max="100") }}
+                                <span class="input-group-text">%</span>
+                            </div>
+                            {% if form.discount_percentage.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.discount_percentage.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.discount_amount.label(class="form-label") }}
+                            <div class="input-group mb-1">
+                                {{ form.discount_amount(class="form-control", step="0.01", min="0") }}
+                                <span class="input-group-text">جنيه</span>
+                            </div>
+                            {% if form.discount_amount.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.discount_amount.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- الضريبة والديوز -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.include_tax(class="form-check-input") }}
+                                {{ form.include_tax.label(class="form-check-label") }}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.is_deus(class="form-check-input") }}
+                                {{ form.is_deus.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="3") }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>حفظ التعديلات
+                        </button>
+                        <a href="{{ url_for('booking.details', id=booking.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>معلومات الحجز الحالي
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>رقم الحجز:</strong> #{{ booking.booking_code or booking.id }}
+                </div>
+                <div class="mb-3">
+                    <strong>الحالة:</strong>
+                    {% if booking.status == 'pending' %}
+                        <span class="badge bg-warning">في الانتظار</span>
+                    {% elif booking.status == 'confirmed' %}
+                        <span class="badge bg-success">مؤكد</span>
+                    {% elif booking.status == 'checked_in' %}
+                        <span class="badge bg-primary">تم تسجيل الدخول</span>
+                    {% elif booking.status == 'checked_out' %}
+                        <span class="badge bg-secondary">تم تسجيل الخروج</span>
+                    {% elif booking.status == 'cancelled' %}
+                        <span class="badge bg-danger">ملغي</span>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <strong>الغرفة الحالية:</strong> {{ booking.room.room_number }}
+                </div>
+                <div class="mb-3">
+                    <strong>العميل:</strong> {{ booking.customer.full_name }}
+                </div>
+                <div class="mb-3">
+                    <strong>تاريخ الوصول الحالي:</strong> {{ booking.check_in_date.strftime('%Y-%m-%d') }}
+                </div>
+                <div class="mb-3">
+                    <strong>تاريخ المغادرة الحالي:</strong> {{ booking.check_out_date.strftime('%Y-%m-%d') }}
+                </div>
+                <div class="mb-3">
+                    <strong>نوع الإقامة:</strong> {{ booking.occupancy_type|title }}
+                </div>
+                <div class="mb-3">
+                    <strong>نوع الحساب:</strong>
+                    <span class="badge bg-{{ 'warning' if booking.is_deus else 'info' }}">
+                        {{ 'ديوز' if booking.is_deus else 'عادي' }}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <strong>المبلغ الإجمالي الحالي:</strong> {{ "%.2f"|format(booking.total_price) }} جنيه
+                </div>
+
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>يمكن التعديل:</strong> هذا الحجز قابل للتعديل في أي وقت وأي حالة.
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>ملاحظة:</strong> سيتم إعادة حساب المبلغ الإجمالي تلقائياً عند تغيير الغرفة أو التواريخ.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-calculate total price when room or dates change
+        const roomSelect = document.getElementById('room_id');
+        const checkInDate = document.getElementById('check_in_date');
+        const checkOutDate = document.getElementById('check_out_date');
+        
+        function updatePricePreview() {
+            // This is a simple preview - actual calculation happens on server
+            const selectedRoom = roomSelect.options[roomSelect.selectedIndex];
+            if (selectedRoom && checkInDate.value && checkOutDate.value) {
+                const checkIn = new Date(checkInDate.value);
+                const checkOut = new Date(checkOutDate.value);
+                const days = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                
+                if (days > 0) {
+                    // Extract price from room option text (format: "Room - Type - Price")
+                    const roomText = selectedRoom.text;
+                    const priceMatch = roomText.match(/(\d+\.?\d*)/g);
+                    if (priceMatch && priceMatch.length >= 3) {
+                        const pricePerNight = parseFloat(priceMatch[2]);
+                        const totalPrice = pricePerNight * days;
+                        
+                        // Show preview in console or add a preview element
+                        console.log(`المبلغ المتوقع: جنيه{totalPrice.toFixed(2)} جنيه (جنيه{days} ليلة × جنيه{pricePerNight} جنيه)`);
+                    }
+                }
+            }
+        }
+        
+        if (roomSelect) roomSelect.addEventListener('change', updatePricePreview);
+        if (checkInDate) checkInDate.addEventListener('change', updatePricePreview);
+        if (checkOutDate) checkOutDate.addEventListener('change', updatePricePreview);
+
+        // البحث عن العملاء
+        const searchInput = document.getElementById('customerSearchInput');
+        const clearBtn = document.getElementById('clearCustomerBtn');
+        const customerIdField = document.getElementById('customer_id');
+        const selectedCustomerCard = document.getElementById('selectedCustomerCard');
+        const selectedCustomerInfo = document.getElementById('selectedCustomerInfo');
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsList = document.getElementById('searchResultsList');
+
+        let searchTimeout;
+
+        // إذا كان هناك عميل محدد مسبقاً
+        if (customerIdField && customerIdField.value && searchInput && searchInput.value) {
+            showSelectedCustomer({
+                id: customerIdField.value,
+                name: searchInput.value
+            });
+        }
+
+        // البحث عند الكتابة
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim();
+
+                clearTimeout(searchTimeout);
+
+                if (query.length >= 2) {
+                    searchTimeout = setTimeout(() => {
+                        searchCustomers(query);
+                    }, 500);
+                } else {
+                    hideSearchResults();
+                    if (query.length === 0) {
+                        hideSelectedCustomer();
+                    }
+                }
+            });
+        }
+
+        // مسح البحث
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                hideSearchResults();
+                hideSelectedCustomer();
+                searchInput.focus();
+            });
+        }
+
+        function searchCustomers(query) {
+            searchResultsList.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> جاري البحث...</div>';
+            searchResults.style.display = 'block';
+
+            fetch(`/api/customers/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displaySearchResults(data.customers);
+                    } else {
+                        searchResultsList.innerHTML = '<div class="text-danger">حدث خطأ في البحث</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    searchResultsList.innerHTML = '<div class="text-danger">حدث خطأ في البحث</div>';
+                });
+        }
+
+        function displaySearchResults(customers) {
+            if (customers.length === 0) {
+                searchResultsList.innerHTML = '<div class="text-center text-muted">لا توجد نتائج للبحث</div>';
+                return;
+            }
+
+            let html = '';
+            customers.forEach(customer => {
+                html += `
+                    <div class="border-bottom pb-1 mb-1">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${customer.name}</h6>
+                                <small class="text-muted">
+                                    <i class="fas fa-id-card me-1"></i>${customer.id_number}
+                                    ${customer.phone ? `<br><i class="fas fa-phone me-1"></i>${customer.phone}` : ''}
+                                </small>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm"
+                                    onclick="selectCustomer(${customer.id}, '${customer.name}', '${customer.id_number}', '${customer.phone || ''}')">
+                                اختيار
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            searchResultsList.innerHTML = html;
+        }
+
+        window.selectCustomer = function(id, name, id_number, phone) {
+            showSelectedCustomer({
+                id: id,
+                name: name,
+                id_number: id_number,
+                phone: phone
+            });
+
+            hideSearchResults();
+            searchInput.value = name;
+        };
+
+        function showSelectedCustomer(customer) {
+            customerIdField.value = customer.id;
+
+            selectedCustomerInfo.innerHTML = `
+                <h6 class="mb-1">${customer.name}</h6>
+                <small class="text-muted">
+                    <i class="fas fa-id-card me-1"></i>${customer.id_number || ''}
+                    ${customer.phone ? `<br><i class="fas fa-phone me-1"></i>${customer.phone}` : ''}
+                </small>
+            `;
+
+            selectedCustomerCard.style.display = 'block';
+        }
+
+        function hideSelectedCustomer() {
+            customerIdField.value = '';
+            selectedCustomerCard.style.display = 'none';
+        }
+
+        function hideSearchResults() {
+            searchResults.style.display = 'none';
+            searchResultsList.innerHTML = '';
+        }
+    });
+</script>
+{% endblock %}

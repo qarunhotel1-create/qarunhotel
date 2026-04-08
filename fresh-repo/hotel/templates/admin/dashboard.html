@@ -1,0 +1,1119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="text-center">
+            <h1 class="display-4 text-gradient fw-bold mb-3">
+                <i class="fas fa-tachometer-alt me-3"></i>لوحة التحكم
+            </h1>
+            <p class="lead text-muted">مرحباً بك في QARUN HOTEL</p>
+        </div>
+    </div>
+</div>
+
+<!-- البحث عن الحجوزات -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-custom border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>البحث عن الحجوزات
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- نظام البحث الذكي الجديد -->
+                <div class="smart-search-container">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-gradient-primary text-white border-0">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text"
+                               id="smartSearch"
+                               class="form-control border-0 shadow-sm"
+                               placeholder="ابحث برقم الحجز، الاسم، الهاتف، أو رقم الهوية..."
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary border-0" type="button" id="clearSearchBtn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- مؤشر الحالة -->
+                    <div class="search-status mt-2" id="searchStatus" style="display: none;">
+                        <small class="text-muted d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status" id="searchSpinner" style="display: none;">
+                                <span class="visually-hidden">جاري البحث...</span>
+                            </div>
+                            <i class="fas fa-info-circle me-1" id="searchIcon"></i>
+                            <span id="statusText">ابدأ الكتابة للبحث الفوري...</span>
+                        </small>
+                    </div>
+                </div>
+
+                <!-- منطقة النتائج الذكية -->
+                <div id="smartResults" class="smart-results mt-3" style="display: none;">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+
+                <!-- معاينة الحجز -->
+                <div id="bookingPreview" class="mt-4" style="display: none;">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-eye me-2"></i>معاينة الحجز
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-light" onclick="clearSearch()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="card-body" id="previewContent">
+                            <!-- محتوى المعاينة -->
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="button" id="goToBookingBtn" class="btn btn-success btn-lg">
+                                <i class="fas fa-arrow-right me-2"></i>الانتقال لتفاصيل الحجز
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- رسالة عدم وجود نتائج -->
+                <div id="noResultsMessage" class="alert alert-warning mt-4" style="display: none;">
+                    <div class="text-center">
+                        <i class="fas fa-search-minus fa-3x text-muted mb-3"></i>
+                        <h5>لم يتم العثور على نتائج</h5>
+                        <p class="mb-3">لم يتم العثور على حجوزات تطابق البحث</p>
+                        <a href="{{ url_for('booking.create') }}" class="btn btn-success btn-lg">
+                            <i class="fas fa-plus me-2"></i>إضافة حجز جديد
+                        </a>
+                    </div>
+                </div>
+
+                <!-- نتائج متعددة -->
+                <div id="multipleResults" class="mt-4" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-list me-2"></i>تم العثور على عدة نتائج - اختر الحجز المطلوب:</h6>
+                    </div>
+                    <div class="row" id="resultsContainer">
+                        <!-- النتائج ستظهر هنا -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- خريطة الغرف - حالة اليوم في المقدمة -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-custom border-0">
+            <div class="card-header bg-gradient-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-day me-2"></i>خريطة الغرف - حالة اليوم ({{ today_formatted }})
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-door-open me-1"></i>فارغة: {{ available_today }}
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-user me-1"></i>محجوزة: {{ occupied_today }}
+                        </span>
+                        <a href="{{ url_for('admin.update_room_status') }}" class="btn btn-sm btn-light">
+                            <i class="fas fa-sync-alt me-1"></i>تحديث الحالة
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    {% for room_info in rooms_status %}
+                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                        <div class="room-card-mini
+                            {% if room_info.status_class == 'occupied' %}room-occupied
+                            {% elif room_info.status_class == 'reserved' %}room-reserved
+                            {% else %}room-available{% endif %}
+                            pulse-hover"
+                            {% if room_info.is_occupied and room_info.booking %}
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-html="true"
+                            title="<strong>{{ room_info.booking.customer.name }}</strong><br>
+                                   {% if room_info.booking.is_deus %}
+                                   <span class='text-warning'>ديوز (6 ساعات)</span><br>
+                                   {% if room_info.booking.deus_start_time %}
+                                   بدأ: {{ room_info.booking.deus_start_time|egypt_time_only }}<br>
+                                   ينتهي: {{ room_info.booking.deus_end_time|egypt_time_only }}<br>
+                                   متبقي: {{ room_info.booking.deus_remaining_time }} دقيقة
+                                   {% else %}
+                                   لم يبدأ بعد
+                                   {% endif %}
+                                   {% else %}
+                                   دخول: {{ room_info.booking.check_in_date|egypt_date }} - 1:00م<br>
+                                   خروج: {{ room_info.booking.check_out_date|egypt_date }} - 12:00م<br>
+                                   حُجز: {{ room_info.booking.created_at|egypt_time }}
+                                   {% endif %}"
+                            {% endif %}>
+                            <div class="room-header-mini">
+                                <div class="room-number-mini">{{ room_info.room.room_number }}</div>
+                                <div class="room-status-icon-mini">
+                                    <i class="{{ room_info.status_icon }}"></i>
+                                </div>
+                            </div>
+                            <div class="room-body-mini">
+                                <div class="room-type-mini">{{ room_info.room.get_room_type_display() }}</div>
+                                <div class="room-status-text-mini">
+                                    {% if room_info.is_occupied %}
+                                        {% if room_info.booking and room_info.booking.is_deus %}
+                                            <span class="text-warning">{{ room_info.status_text }}</span>
+                                        {% else %}
+                                            <span class="text-danger">{{ room_info.status_text }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-success">{{ room_info.status_text }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if room_info.is_occupied and room_info.booking %}
+                                <div class="room-booking-number">
+                                    <i class="fas fa-hashtag me-1"></i>{{ room_info.booking.booking_code or room_info.booking.id }}
+                                </div>
+                                {% endif %}
+                                <div class="room-price-mini">{{ room_info.room.price_per_night }} جنيه/ليلة</div>
+                                {% if room_info.is_occupied and room_info.booking %}
+                                <div class="room-guest-mini">
+                                    <i class="fas fa-user me-1"></i>{{ room_info.booking.customer.name }}
+                                </div>
+                                {% if room_info.booking.customer.phone %}
+                                <div class="room-guest-phone">
+                                    <i class="fas fa-phone me-1"></i>{{ room_info.booking.customer.phone }}
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="room-actions-mini">
+                                {% if room_info.is_occupied %}
+                                    <a href="{{ url_for('booking.details', id=room_info.booking.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('booking.create') }}?room_id={{ room_info.room.id }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{{ url_for('room.details', id=room_info.room.id) }}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-info"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card pulse-hover">
+            <div class="card-icon">
+                <i class="fas fa-door-open"></i>
+            </div>
+            <div class="card-title">{{ total_rooms }}</div>
+            <div class="card-subtitle">إجمالي الغرف</div>
+            <div class="mt-3">
+                <a href="{{ url_for('room.index') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card pulse-hover">
+            <div class="card-icon text-success">
+                <i class="fas fa-door-open"></i>
+            </div>
+            <div class="card-title text-success">{{ available_today }}</div>
+            <div class="card-subtitle">الغرف الفارغة اليوم</div>
+            <div class="mt-3">
+                <a href="{{ url_for('room.available') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card pulse-hover">
+            <div class="card-icon text-danger">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="card-title text-danger">{{ occupied_today }}</div>
+            <div class="card-subtitle">الغرف المحجوزة اليوم</div>
+            <div class="mt-3">
+                <a href="{{ url_for('booking.index') }}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card pulse-hover">
+            <div class="card-icon text-warning">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="card-title text-warning">{{ active_bookings }}</div>
+            <div class="card-subtitle">الحجوزات النشطة</div>
+            <div class="mt-3">
+                <a href="{{ url_for('booking.index') }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="dashboard-card pulse-hover">
+            <div class="card-icon text-info">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="card-title text-info">{{ total_customers }}</div>
+            <div class="card-subtitle">إجمالي العملاء</div>
+            <div class="mt-3">
+                <a href="{{ url_for('customer.index') }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-eye me-1"></i>عرض التفاصيل
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block styles %}
+<style>
+.room-booking-number {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b6b 0%, #f06595 100%);
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-bottom: 3px;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.room-guest-mini {
+    font-size: 0.8rem;
+    color: #495057;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 3px 5px;
+    border-radius: 4px;
+    margin-top: 2px;
+}
+
+.room-guest-phone {
+    font-size: 0.75rem;
+    color: #0d6efd;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 2px 5px;
+    border-radius: 4px;
+    margin-top: 2px;
+}
+
+.room-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.room-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.room-available {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+}
+
+.room-occupied {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #fff8f8 0%, #ffe8e8 100%);
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.room-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.room-status-icon {
+    font-size: 1.2rem;
+}
+
+.room-available .room-status-icon {
+    color: #28a745;
+}
+
+.room-occupied .room-status-icon {
+    color: #dc3545;
+}
+
+.room-body {
+    flex-grow: 1;
+    margin-bottom: 10px;
+}
+
+.room-type {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.room-status {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.room-available .room-status {
+    color: #28a745;
+}
+
+.room-occupied .room-status {
+    color: #dc3545;
+}
+
+.room-guest, .room-dates {
+    margin-bottom: 3px;
+}
+
+.room-price {
+    color: #007bff;
+    font-size: 0.85rem;
+}
+
+.room-footer {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.room-footer .btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .room-card {
+        height: 160px;
+        padding: 12px;
+    }
+
+    .room-number {
+        font-size: 1.3rem;
+    }
+}
+
+/* Animation for room status changes */
+.room-card {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* تنسيق البحث */
+#searchResults {
+    animation: fadeIn 0.3s ease-in;
+}
+
+.search-highlight {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+</style>
+
+<script>
+// نظام البحث الذكي الجديد
+let searchTimeout;
+let currentResults = [];
+
+// تهيئة البحث الذكي
+document.addEventListener('DOMContentLoaded', function() {
+    const smartSearch = document.getElementById('smartSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const searchStatus = document.getElementById('searchStatus');
+    const statusText = document.getElementById('statusText');
+    const searchSpinner = document.getElementById('searchSpinner');
+    const searchIcon = document.getElementById('searchIcon');
+    const smartResults = document.getElementById('smartResults');
+
+    let currentQuery = '';
+
+    // البحث الذكي الفوري
+    smartSearch.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        currentQuery = query;
+
+        // إظهار/إخفاء عناصر التحكم
+        if (query.length > 0) {
+            clearBtn.style.display = 'block';
+            searchStatus.style.display = 'block';
+        } else {
+            clearBtn.style.display = 'none';
+            searchStatus.style.display = 'none';
+            smartResults.style.display = 'none';
+            return;
+        }
+
+        // البحث الفوري من أول حرف
+        if (query.length >= 1) {
+            showSearching();
+
+            searchTimeout = setTimeout(() => {
+                performSmartSearch(query);
+            }, 200); // بحث سريع جداً
+        }
+    });
+
+    // مسح البحث
+    clearBtn.addEventListener('click', function() {
+        smartSearch.value = '';
+        clearBtn.style.display = 'none';
+        searchStatus.style.display = 'none';
+        smartResults.style.display = 'none';
+        smartSearch.focus();
+    });
+
+    // البحث عند الضغط على Enter
+    smartSearch.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const query = this.value.trim();
+            if (query.length > 0) {
+                // إذا كان رقم حجز، انتقل مباشرة
+                if (/^\d+$/.test(query) && currentResults.length === 1) {
+                    window.location.href = currentResults[0].url;
+                } else if (currentResults.length > 0) {
+                    // انتقل للنتيجة الأولى
+                    window.location.href = currentResults[0].url;
+                }
+            }
+        }
+    });
+
+    // تركيز على مربع البحث
+    smartSearch.focus();
+});
+
+// البحث الذكي الجديد
+function performSmartSearch(query) {
+    hideSearching();
+
+    fetch(`/admin/search-bookings?q=${encodeURIComponent(query)}&ajax=1`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            updateSearchStatus(data.count, query);
+
+            if (data.success && data.count > 0) {
+                currentResults = data.results;
+                showSmartResults(data.results, query);
+            } else {
+                currentResults = [];
+                showNoResults(query);
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في البحث:', error);
+            showSearchError('حدث خطأ في البحث');
+            currentResults = [];
+        });
+}
+
+// تحديث حالة البحث
+function updateSearchStatus(count, query) {
+    const statusText = document.getElementById('statusText');
+
+    if (count === 0) {
+        statusText.textContent = `لا توجد نتائج مطابقة لـ "${query}"`;
+    } else if (count === 1) {
+        // تحديد نوع النتيجة
+        const isBookingId = /^\d+$/.test(query);
+        if (isBookingId) {
+            statusText.textContent = `تم العثور على الحجز رقم ${query} - اضغط Enter للانتقال`;
+        } else {
+            statusText.textContent = `تم العثور على نتيجة واحدة مطابقة - اضغط Enter للانتقال`;
+        }
+    } else {
+        const isBookingId = /^\d+$/.test(query);
+        if (isBookingId) {
+            statusText.textContent = `تم العثور على ${count} حجز مرتبط بالرقم ${query}`;
+        } else {
+            statusText.textContent = `تم العثور على ${count} حجز مطابق لـ "${query}"`;
+        }
+    }
+}
+
+// إظهار حالة البحث
+function showSearching() {
+    const statusText = document.getElementById('statusText');
+    const searchSpinner = document.getElementById('searchSpinner');
+    const searchIcon = document.getElementById('searchIcon');
+
+    if (statusText) statusText.textContent = 'جاري البحث...';
+    if (searchSpinner) searchSpinner.style.display = 'inline-block';
+    if (searchIcon) searchIcon.style.display = 'none';
+}
+
+// إخفاء حالة البحث
+function hideSearching() {
+    const searchSpinner = document.getElementById('searchSpinner');
+    const searchIcon = document.getElementById('searchIcon');
+
+    if (searchSpinner) searchSpinner.style.display = 'none';
+    if (searchIcon) searchIcon.style.display = 'inline-block';
+}
+
+// عرض النتائج الذكية
+function showSmartResults(results, query) {
+    const smartResults = document.getElementById('smartResults');
+    if (!smartResults) return;
+
+    // تحديد نوع البحث
+    const isBookingId = /^\d+$/.test(query);
+    const searchType = isBookingId ? 'رقم الحجز' : 'البحث';
+
+    let headerText = '';
+    if (results.length === 1) {
+        if (isBookingId) {
+            headerText = `الحجز رقم ${query}`;
+        } else {
+            headerText = `النتيجة المطابقة لـ "${query}"`;
+        }
+    } else {
+        if (isBookingId) {
+            headerText = `${results.length} حجز مرتبط بالرقم ${query}`;
+        } else {
+            headerText = `${results.length} حجز مطابق لـ "${query}"`;
+        }
+    }
+
+    let html = `
+        <div class="results-header mb-3">
+            <h6 class="text-primary mb-0">
+                <i class="fas fa-bullseye me-2"></i>
+                ${headerText}
+            </h6>
+        </div>
+        <div class="results-list">
+    `;
+
+    results.forEach((booking, index) => {
+        const statusColor = getStatusColor(booking.status);
+        const isFirst = index === 0;
+
+        // تحديد إذا كانت النتيجة مطابقة تماماً
+        const isExactMatch = (isBookingId && booking.id == query) ||
+                           (!isBookingId && (
+                               booking.customer_name.toLowerCase() === query.toLowerCase() ||
+                               booking.customer_phone === query ||
+                               booking.customer_id_number === query
+                           ));
+
+        const matchClass = isExactMatch ? 'exact-match' : (isFirst ? 'first-result' : '');
+        const matchBadge = isExactMatch ? '<span class="badge bg-warning text-dark me-2"><i class="fas fa-star me-1"></i>مطابقة تامة</span>' : '';
+
+        html += `
+            <div class="result-item ${matchClass}" onclick="window.location.href='${booking.url}'" style="cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="result-info flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <strong class="text-primary me-2">#${booking.booking_code || booking.id}</strong>
+                            <span class="badge bg-${statusColor} me-2">${booking.status_display || booking.status}</span>
+                            ${matchBadge}
+                            ${isFirst ? '<span class="badge bg-success"><i class="fas fa-arrow-right me-1"></i>Enter للانتقال</span>' : ''}
+                        </div>
+                        <div class="customer-info">
+                            <i class="fas fa-user me-1 text-muted"></i>
+                            <strong>${highlightMatch(booking.customer_name, query)}</strong>
+                        </div>
+                        <div class="booking-details mt-1">
+                            <small class="text-muted">
+                                <i class="fas fa-bed me-1"></i>غرفة ${booking.room_number} •
+                                <i class="fas fa-calendar me-1"></i>${booking.check_in} إلى ${booking.check_out} •
+                                <i class="fas fa-money-bill me-1"></i>${booking.total_price} جنيه
+                            </small>
+                            ${booking.customer_phone ? `<br><small class="text-muted"><i class="fas fa-phone me-1"></i>${highlightMatch(booking.customer_phone, query)}</small>` : ''}
+                            ${booking.customer_id_number ? `<br><small class="text-muted"><i class="fas fa-id-card me-1"></i>${highlightMatch(booking.customer_id_number, query)}</small>` : ''}
+                        </div>
+                    </div>
+                    <div class="result-actions">
+                        <i class="fas fa-chevron-left text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+
+    smartResults.innerHTML = html;
+    smartResults.style.display = 'block';
+}
+
+// عرض معاينة الحجز
+function showBookingPreview(booking) {
+    currentBookingUrl = booking.url;
+
+    const content = document.getElementById('previewContent');
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-user me-2"></i>بيانات العميل
+                </h6>
+                <p class="mb-2"><strong>الاسم:</strong> ${booking.customer_name}</p>
+                <p class="mb-2"><strong>رقم الهوية:</strong> ${booking.customer_id_number}</p>
+                <p class="mb-2"><strong>التليفون:</strong> ${booking.customer_phone}</p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-info mb-3">
+                    <i class="fas fa-bed me-2"></i>بيانات الحجز
+                </h6>
+                <p class="mb-2"><strong>رقم الحجز:</strong> #${booking.booking_code || booking.id}</p>
+                <p class="mb-2"><strong>الغرفة:</strong> ${booking.room_number}</p>
+                <p class="mb-2"><strong>المدة:</strong> ${booking.duration_text}</p>
+                <p class="mb-2"><strong>النوع:</strong>
+                    <span class="badge ${booking.is_deus ? 'bg-warning text-dark' : 'bg-info'}">${booking.account_type}</span>
+                </p>
+                <p class="mb-2"><strong>الحالة:</strong>
+                    <span class="badge bg-${booking.status_color}">${booking.status_text}</span>
+                </p>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-4">
+                <p class="mb-1"><strong>تاريخ الوصول:</strong><br>${booking.check_in_date}</p>
+            </div>
+            <div class="col-md-4">
+                <p class="mb-1"><strong>تاريخ المغادرة:</strong><br>${booking.check_out_date}</p>
+            </div>
+            <div class="col-md-4">
+                <p class="mb-1"><strong>المبلغ المتبقي:</strong><br>
+                    <span class="text-danger fw-bold fs-5">${booking.remaining_amount} جنيه</span>
+                </p>
+            </div>
+        </div>
+    `;
+
+    // تحديث زر الانتقال
+    const goBtn = document.getElementById('goToBookingBtn');
+    goBtn.onclick = () => window.location.href = booking.url;
+
+    document.getElementById('bookingPreview').style.display = 'block';
+}
+
+// عرض عدم وجود نتائج
+function showNoResults(query) {
+    const smartResults = document.getElementById('smartResults');
+    if (!smartResults) return;
+
+    smartResults.innerHTML = `
+        <div class="no-results text-center py-4">
+            <i class="fas fa-search text-muted mb-3" style="font-size: 2rem;"></i>
+            <h6 class="text-muted">لا توجد نتائج</h6>
+            <p class="text-muted mb-0">لم يتم العثور على حجوزات تطابق "${query}"</p>
+        </div>
+    `;
+    smartResults.style.display = 'block';
+}
+
+// عرض خطأ البحث
+function showSearchError(message) {
+    const smartResults = document.getElementById('smartResults');
+    if (!smartResults) return;
+
+    smartResults.innerHTML = `
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>خطأ:</strong> ${message}
+        </div>
+    `;
+    smartResults.style.display = 'block';
+}
+
+// عرض عدم وجود نتائج
+function showNoResults(query) {
+    const searchResults = document.getElementById('searchResults');
+    if (searchResults) {
+        const isBookingId = /^\d+$/.test(query) || query.includes('حجز رقم');
+
+        searchResults.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-search text-muted" style="font-size: 3rem;"></i>
+                <h4 class="text-muted mt-3">لا توجد نتائج</h4>
+                <p class="text-muted">
+                    ${isBookingId ?
+                        `لم يتم العثور على ${query}. تأكد من صحة رقم الحجز.` :
+                        `لم يتم العثور على حجوزات تطابق "${query}"`
+                    }
+                </p>
+                <div class="mt-3">
+                    <button class="btn btn-outline-primary me-2" onclick="clearSearch()">
+                        <i class="fas fa-times me-2"></i>مسح البحث
+                    </button>
+                    <a href="/booking/create" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>إضافة حجز جديد
+                    </a>
+                </div>
+            </div>
+        `;
+        searchResults.style.display = 'block';
+    }
+}
+
+// عرض نتائج متعددة
+function showMultipleResults(results, query) {
+    const searchResults = document.getElementById('searchResults');
+    if (!searchResults) return;
+
+    let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-search me-2"></i>
+                نتائج البحث عن "${query}" (${results.length} نتيجة)
+            </h5>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearSearch()">
+                <i class="fas fa-times me-1"></i>مسح
+            </button>
+        </div>
+        <div class="row">
+    `;
+
+    results.forEach(booking => {
+        const statusColor = getStatusColor(booking.status);
+        const statusText = booking.status_display || booking.status;
+
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 booking-card" onclick="window.location.href='${booking.url}'" style="cursor: pointer; transition: transform 0.2s;">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-bed me-2"></i>حجز #${booking.booking_code || booking.id}
+                            <span class="badge bg-light text-dark ms-2">غرفة ${booking.room_number}</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title text-primary">${booking.customer_name}</h6>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                ${booking.customer_id_number ? `<i class="fas fa-id-card me-1"></i>${booking.customer_id_number}<br>` : ''}
+                                ${booking.customer_phone ? `<i class="fas fa-phone me-1"></i>${booking.customer_phone}<br>` : ''}
+                                <i class="fas fa-calendar me-1"></i>${booking.check_in} إلى ${booking.check_out}<br>
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span class="badge bg-${statusColor}">${statusText}</span>
+                            </small>
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge ${booking.is_deus ? 'bg-warning text-dark' : 'bg-info'}">
+                                ${booking.is_deus ? 'ديوز' : 'عادي'}
+                            </span>
+                            <span class="text-success fw-bold">${booking.total_price} جنيه</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+
+    searchResults.innerHTML = html;
+    searchResults.style.display = 'block';
+}
+
+// دالة مساعدة لألوان الحالة
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'warning',
+        'confirmed': 'info',
+        'checked_in': 'success',
+        'checked_out': 'secondary',
+        'cancelled': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+// دالة تمييز النص المطابق
+function highlightMatch(text, query) {
+    if (!text || !query) return text;
+
+    // إذا كان البحث رقمي، لا نميز النص
+    if (/^\d+$/.test(query)) return text;
+
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+}
+
+// دوال مساعدة - تم تعديلها لإزالة الإخفاء التلقائي
+function hidePreview() {
+    // تم إزالة الإخفاء التلقائي - المعاينة مرئية دائماً
+    // document.getElementById('bookingPreview').style.display = 'none';
+    currentBookingUrl = null;
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    clearAllResults();
+    document.getElementById('searchInput').focus();
+}
+
+function clearAllResults() {
+    const searchResults = document.getElementById('searchResults');
+    if (searchResults) {
+        searchResults.style.display = 'none';
+        searchResults.innerHTML = '';
+    }
+
+    const bookingPreview = document.getElementById('bookingPreview');
+    if (bookingPreview) {
+        bookingPreview.style.display = 'none';
+    }
+
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    if (noResultsMessage) {
+        noResultsMessage.style.display = 'none';
+    }
+
+    currentBookingUrl = null;
+}
+
+
+</script>
+
+<style>
+/* نظام البحث الذكي الجديد */
+.smart-search-container {
+    position: relative;
+}
+
+.smart-search-container .input-group {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.smart-search-container .form-control {
+    font-size: 1.1rem;
+    padding: 15px 20px;
+    border: none;
+    background: #fff;
+}
+
+.smart-search-container .form-control:focus {
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    border: none;
+}
+
+.smart-search-container .input-group-text {
+    padding: 15px 20px;
+    border: none;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3) !important;
+}
+
+/* منطقة النتائج */
+.smart-results {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.results-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.results-list {
+    padding: 10px;
+}
+
+.result-item {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.result-item:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    transform: translateX(5px);
+}
+
+.result-item.first-result {
+    background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+    border-color: #2196f3;
+}
+
+.result-item.first-result:hover {
+    background: linear-gradient(45deg, #bbdefb, #e1bee7);
+}
+
+.result-item.exact-match {
+    background: linear-gradient(45deg, #fff3e0, #f3e5f5);
+    border: 2px solid #ff9800;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.result-item.exact-match:hover {
+    background: linear-gradient(45deg, #ffe0b2, #e1bee7);
+    transform: translateX(8px);
+}
+
+.search-highlight {
+    background: linear-gradient(45deg, #ffeb3b, #ffc107);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+    color: #333;
+}
+
+.customer-info {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.booking-details {
+    font-size: 0.9rem;
+}
+
+.no-results {
+    padding: 40px 20px;
+}
+
+/* حالة البحث */
+.search-status {
+    padding: 0 5px;
+}
+
+/* تحسينات الاستجابة */
+@media (max-width: 768px) {
+    .smart-results {
+        max-height: 50vh;
+    }
+
+    .result-item {
+        padding: 12px;
+    }
+
+    .smart-search-container .form-control {
+        font-size: 1rem;
+        padding: 12px 15px;
+    }
+
+    .smart-search-container .input-group-text {
+        padding: 12px 15px;
+    }
+}
+
+/* تأثيرات متحركة */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.smart-results {
+    animation: fadeIn 0.3s ease;
+}
+
+.result-item {
+    animation: fadeIn 0.2s ease;
+}
+
+/* أنماط الغرف */
+.room-card-mini.room-available {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 2px solid #28a745;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.room-card-mini.room-occupied {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border: 2px solid #dc3545;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+}
+
+.room-card-mini.room-reserved {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+}
+
+.room-card-mini.room-maintenance {
+    background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+    border: 2px solid #6c757d;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.2);
+}
+</style>
+{% endblock %}

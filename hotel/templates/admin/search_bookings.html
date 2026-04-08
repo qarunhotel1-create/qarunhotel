@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="text-primary">
+                    <i class="fas fa-search me-2"></i>البحث عن الحجوزات
+                </h2>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right me-1"></i>العودة للوحة التحكم
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- نموذج البحث -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>البحث في جميع الحجوزات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        {{ form.hidden_tag() }}
+                        <div class="col-md-8">
+                            {{ form.search_query.label(class="form-label fw-bold") }}
+                            {{ form.search_query(class="form-control form-control-lg") }}
+                            {% if form.search_query.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.search_query.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                يمكنك البحث برقم الحجز، اسم العميل، رقم التليفون، أو رقم الهوية
+                            </small>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نتائج البحث -->
+    {% if search_results %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>نتائج البحث ({{ search_results|length }} نتيجة)
+                        {% if search_query %}
+                            <span class="badge bg-light text-dark ms-2">{{ search_query }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>رقم الحجز</th>
+                                    <th>اسم العميل</th>
+                                    <th>رقم الهوية</th>
+                                    <th>رقم التليفون</th>
+                                    <th>الغرفة</th>
+                                    <th>عدد الأيام</th>
+                                    <th>نوع الحجز</th>
+                                    <th>نوع الحساب</th>
+                                    <th>تاريخ الوصول</th>
+                                    <th>تاريخ المغادرة</th>
+                                    <th>الحالة</th>
+                                    <th>المبلغ الإجمالي</th>
+                                    <th>المبلغ المدفوع</th>
+                                    <th>المبلغ المتبقي</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in search_results %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">#{{ booking.booking_code or booking.id }}</span>
+                                    </td>
+                                    <td class="fw-bold">{{ booking.customer.name }}</td>
+                                    <td>{{ booking.customer.id_number }}</td>
+                                    <td>{{ booking.customer.phone or 'غير محدد' }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ booking.room.room_number }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ (booking.check_out_date - booking.check_in_date).days }}
+                                            {% if (booking.check_out_date - booking.check_in_date).days == 1 %}يوم{% else %}أيام{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if booking.occupancy_type == 'single' %}
+                                            <span class="badge bg-primary">Single</span>
+                                        {% elif booking.occupancy_type == 'double' %}
+                                            <span class="badge bg-info">Double</span>
+                                        {% elif booking.occupancy_type == 'triple' %}
+                                            <span class="badge bg-secondary">Triple</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">{{ booking.occupancy_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if booking.is_deus %}
+                                            <span class="badge bg-warning text-dark">ديوز</span>
+                                        {% else %}
+                                            <span class="badge bg-info">عادي</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ booking.check_in_date|egypt_date }}</td>
+                                    <td>{{ booking.check_out_date|egypt_date }}</td>
+                                    <td>
+                                        {% if booking.status == 'pending' %}
+                                            <span class="badge bg-warning">في الانتظار</span>
+                                        {% elif booking.status == 'confirmed' %}
+                                            <span class="badge bg-primary">مؤكد</span>
+                                        {% elif booking.status == 'checked_in' %}
+                                            <span class="badge bg-success">تم تسجيل الدخول</span>
+                                        {% elif booking.status == 'checked_out' %}
+                                            <span class="badge bg-secondary">تم تسجيل الخروج</span>
+                                        {% elif booking.status == 'cancelled' %}
+                                            <span class="badge bg-danger">ملغي</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold text-primary">{{ booking.total_price or 0 }} جنيه</td>
+                                    <td class="text-success">{{ booking.paid_amount or 0 }} جنيه</td>
+                                    <td class="text-danger">{{ (booking.total_price or 0) - (booking.paid_amount or 0) }} جنيه</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('booking.details', id=booking.id) }}" 
+                                               class="btn btn-sm btn-info" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('booking.edit', id=booking.id) }}" 
+                                               class="btn btn-sm btn-warning" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('payment.add_payment', booking_id=booking.id) }}"
+                                               class="btn btn-sm btn-success" title="إضافة دفعة">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif search_query %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                لم يتم العثور على حجوزات تطابق "<strong>{{ search_query }}</strong>"
+                <br>
+                <small class="text-muted">تم البحث في جميع الحجوزات (النشطة والمنتهية والملغية)</small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- معلومات إضافية -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>ملاحظات هامة:</h6>
+                <ul class="mb-0">
+                    <li>البحث يتم في جميع الحجوزات (النشطة والمنتهية والملغية)</li>
+                    <li>يتم عرض جميع حالات الحجوزات: في الانتظار، مؤكد، تم تسجيل الدخول، تم تسجيل الخروج، ملغي</li>
+                    <li>يمكنك البحث برقم الحجز أو أي جزء من اسم العميل أو رقم التليفون أو رقم الهوية</li>
+                    <li>البحث غير حساس لحالة الأحرف (كبيرة/صغيرة)</li>
+                    <li>النتائج مرتبة حسب تاريخ الإنشاء (الأحدث أولاً)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.btn-group .btn {
+    margin: 0 1px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.badge {
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}
+
+{% endblock %}
+
+{% endblock %}

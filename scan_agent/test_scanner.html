@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الماسح الضوئي</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .status-panel {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-right: 4px solid #3498db;
+        }
+        .status-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-left: 10px;
+            background-color: #e74c3c;
+        }
+        .status-indicator.connected {
+            background-color: #2ecc71;
+        }
+        .status-message {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        .control-panel {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-right: 4px solid #f39c12;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            direction: rtl;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result-panel {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border-right: 4px solid #2ecc71;
+            display: none;
+        }
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        .scanned-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .image-container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: calc(50% - 15px);
+            box-sizing: border-box;
+        }
+        .image-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 3px;
+        }
+        .image-title {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            background-color: #ffeaea;
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-right: 4px solid #e74c3c;
+            display: none;
+        }
+        .success-message {
+            background-color: #eafff4;
+            color: #27ae60;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-right: 4px solid #27ae60;
+            display: none;
+        }
+        .download-all {
+            background-color: #27ae60;
+            margin-top: 15px;
+            display: none;
+        }
+        .download-all:hover {
+            background-color: #219653;
+        }
+        .scanner-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        @media (max-width: 768px) {
+            .image-container {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>اختبار الماسح الضوئي</h1>
+        
+        <div class="status-panel">
+            <div class="status-title">
+                <span class="status-indicator" id="connectionStatus"></span>
+                حالة الاتصال بخدمة المسح الضوئي
+            </div>
+            <div class="status-message" id="statusMessage">جاري التحقق من الاتصال...</div>
+            <div class="scanner-info" id="scannerInfo"></div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="form-group">
+                <label for="numPages">عدد الصفحات المطلوب مسحها:</label>
+                <input type="number" id="numPages" min="1" max="10" value="1">
+            </div>
+            <button id="scanButton" disabled>بدء المسح الضوئي</button>
+        </div>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <div>جاري المسح الضوئي... يرجى الانتظار</div>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        
+        <div class="result-panel" id="resultPanel">
+            <div class="result-title">نتائج المسح الضوئي:</div>
+            <div class="scanned-images" id="scannedImages"></div>
+            <button class="download-all" id="downloadAllButton">تنزيل جميع الصور</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const connectionStatus = document.getElementById('connectionStatus');
+            const statusMessage = document.getElementById('statusMessage');
+            const scannerInfo = document.getElementById('scannerInfo');
+            const scanButton = document.getElementById('scanButton');
+            const numPages = document.getElementById('numPages');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const resultPanel = document.getElementById('resultPanel');
+            const scannedImages = document.getElementById('scannedImages');
+            const downloadAllButton = document.getElementById('downloadAllButton');
+            
+            let scannedFiles = [];
+            
+            // التحقق من حالة الاتصال بالخادم
+            checkServerConnection();
+            
+            // التحقق من الاتصال كل 5 ثوانٍ
+            setInterval(checkServerConnection, 5000);
+            
+            // التحقق من حالة الاتصال بالخادم
+            function checkServerConnection() {
+                fetch('/health')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            connectionStatus.classList.add('connected');
+                            statusMessage.textContent = 'متصل بخدمة المسح الضوئي';
+                            scanButton.disabled = false;
+                            
+                            // عرض معلومات الماسح الضوئي إذا كانت متوفرة
+                            if (data.scanner_info) {
+                                scannerInfo.textContent = `الماسح الضوئي المتصل: ${data.scanner_info}`;
+                            } else if (data.simulation_mode) {
+                                scannerInfo.textContent = 'وضع المحاكاة: نشط (لم يتم العثور على ماسح ضوئي)';
+                            } else {
+                                scannerInfo.textContent = 'لم يتم العثور على ماسح ضوئي متصل';
+                            }
+                        } else {
+                            throw new Error('خدمة المسح الضوئي غير متاحة');
+                        }
+                    })
+                    .catch(error => {
+                        connectionStatus.classList.remove('connected');
+                        statusMessage.textContent = 'غير متصل بخدمة المسح الضوئي';
+                        scannerInfo.textContent = '';
+                        scanButton.disabled = true;
+                    });
+            }
+            
+            // بدء عملية المسح الضوئي
+            scanButton.addEventListener('click', function() {
+                // إخفاء الرسائل السابقة
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+                resultPanel.style.display = 'none';
+                
+                // إظهار مؤشر التحميل
+                loadingIndicator.style.display = 'block';
+                
+                // تعطيل زر المسح أثناء العملية
+                scanButton.disabled = true;
+                
+                // إرسال طلب المسح الضوئي
+                fetch('/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        num_pages: parseInt(numPages.value)
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw err; });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // إخفاء مؤشر التحميل
+                    loadingIndicator.style.display = 'none';
+                    
+                    // تمكين زر المسح مرة أخرى
+                    scanButton.disabled = false;
+                    
+                    if (data.success) {
+                        // عرض رسالة النجاح
+                        successMessage.textContent = 'تم المسح الضوئي بنجاح!';
+                        successMessage.style.display = 'block';
+                        
+                        // حفظ الملفات الممسوحة
+                        scannedFiles = data.files || [];
+                        
+                        // عرض الصور الممسوحة
+                        displayScannedImages(scannedFiles);
+                        
+                        // إظهار زر تنزيل جميع الصور إذا كان هناك أكثر من صورة
+                        if (scannedFiles.length > 1) {
+                            downloadAllButton.style.display = 'block';
+                        } else {
+                            downloadAllButton.style.display = 'none';
+                        }
+                    } else {
+                        // عرض رسالة الخطأ
+                        errorMessage.textContent = data.error || 'حدث خطأ أثناء المسح الضوئي';
+                        errorMessage.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    // إخفاء مؤشر التحميل
+                    loadingIndicator.style.display = 'none';
+                    
+                    // تمكين زر المسح مرة أخرى
+                    scanButton.disabled = false;
+                    
+                    // عرض رسالة الخطأ
+                    errorMessage.textContent = error.message || 'حدث خطأ أثناء الاتصال بخدمة المسح الضوئي';
+                    errorMessage.style.display = 'block';
+                });
+            });
+            
+            // عرض الصور الممسوحة
+            function displayScannedImages(files) {
+                // مسح الصور السابقة
+                scannedImages.innerHTML = '';
+                
+                // إضافة كل صورة ممسوحة
+                files.forEach((file, index) => {
+                    const imageContainer = document.createElement('div');
+                    imageContainer.className = 'image-container';
+                    
+                    const img = document.createElement('img');
+                    img.src = file;
+                    img.alt = `الصورة الممسوحة ${index + 1}`;
+                    img.loading = 'lazy';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'image-title';
+                    title.textContent = `الصفحة ${index + 1}`;
+                    
+                    const downloadButton = document.createElement('button');
+                    downloadButton.textContent = 'تنزيل';
+                    downloadButton.style.marginTop = '10px';
+                    downloadButton.addEventListener('click', function() {
+                        downloadImage(file, `scanned_image_${index + 1}.jpg`);
+                    });
+                    
+                    imageContainer.appendChild(img);
+                    imageContainer.appendChild(title);
+                    imageContainer.appendChild(downloadButton);
+                    
+                    scannedImages.appendChild(imageContainer);
+                });
+                
+                // إظهار لوحة النتائج
+                resultPanel.style.display = 'block';
+            }
+            
+            // تنزيل صورة
+            function downloadImage(url, filename) {
+                fetch(url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = filename;
+                        link.click();
+                        URL.revokeObjectURL(link.href);
+                    })
+                    .catch(error => {
+                        console.error('خطأ في تنزيل الصورة:', error);
+                        alert('حدث خطأ أثناء تنزيل الصورة');
+                    });
+            }
+            
+            // تنزيل جميع الصور
+            downloadAllButton.addEventListener('click', function() {
+                scannedFiles.forEach((file, index) => {
+                    setTimeout(() => {
+                        downloadImage(file, `scanned_image_${index + 1}.jpg`);
+                    }, index * 500); // تأخير بين التنزيلات لتجنب حظر المتصفح
+                });
+            });
+        });
+    </script>
+</body>
+</html>

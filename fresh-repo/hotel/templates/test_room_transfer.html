@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-exchange-alt me-2"></i>اختبار نقل الغرف
+            </h2>
+        </div>
+    </div>
+
+    <!-- معلومات النظام -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>معلومات النظام
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>المستخدم الحالي:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>الاسم:</strong> {{ current_user.full_name or current_user.username }}</li>
+                                <li><strong>الصلاحيات:</strong> 
+                                    {% if current_user.can_transfer_room() %}
+                                        <span class="badge bg-success">يمكن نقل الغرف</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">لا يمكن نقل الغرف</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>إحصائيات سريعة:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>الحجوزات النشطة:</strong> {{ active_bookings_count }}</li>
+                                <li><strong>الغرف المتاحة:</strong> {{ available_rooms_count }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الحجوزات النشطة -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bed me-2"></i>الحجوزات النشطة (يمكن نقلها)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if active_bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>رقم الحجز</th>
+                                    <th>العميل</th>
+                                    <th>الغرفة الحالية</th>
+                                    <th>نوع الإقامة</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in active_bookings %}
+                                <tr>
+                                    <td><strong>#{{ booking.booking_code or booking.id }}</strong></td>
+                                    <td>{{ booking.customer.name }}</td>
+                                    <td>غرفة {{ booking.room.room_number }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ booking.occupancy_type.title() }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ booking.get_status_color() }}">
+                                            {{ booking.get_status_display() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if current_user.can_transfer_room() and booking.status == 'checked_in' %}
+                                        <a href="{{ url_for('room_transfer.transfer_form', booking_id=booking.id) }}" 
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-exchange-alt me-1"></i>نقل الغرفة
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">غير متاح</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-bed fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد حجوزات نشطة</h5>
+                        <p class="text-muted">لا توجد حجوزات في حالة تسجيل دخول يمكن نقلها</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أزرار التنقل -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('booking.index') }}" class="btn btn-primary me-2">
+                <i class="fas fa-calendar-check me-1"></i>جميع الحجوزات
+            </a>
+            {% if current_user.can_access_admin_panel() %}
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-danger me-2">
+                <i class="fas fa-tachometer-alt me-1"></i>لوحة تحكم المدير
+            </a>
+            {% endif %}
+            <a href="{{ url_for('user.dashboard') }}" class="btn btn-info">
+                <i class="fas fa-user-cog me-1"></i>لوحة تحكم المستخدم
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

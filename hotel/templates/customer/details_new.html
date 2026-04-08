@@ -1,0 +1,957 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-user me-2 text-primary"></i>{{ customer.name }}
+                    </h2>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('main.user_dashboard') }}">الرئيسية</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('customer_new.index') }}">العملاء</a></li>
+                            <li class="breadcrumb-item active">{{ customer.name }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{{ url_for('customer_new.edit', id=customer.id) }}" class="btn btn-warning me-2">
+                        <i class="fas fa-edit me-1"></i>تعديل
+                    </a>
+                    <a href="{{ url_for('customer_new.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- بيانات العميل -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>البيانات الشخصية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>الاسم:</strong></div>
+                        <div class="col-sm-8">{{ customer.name }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>رقم الهوية:</strong></div>
+                        <div class="col-sm-8">{{ customer.id_number|dash }}</div>
+                    </div>
+                    {% if customer.phone %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>الهاتف:</strong></div>
+                        <div class="col-sm-8">{{ customer.phone|dash }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.nationality %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>الجنسية:</strong></div>
+                        <div class="col-sm-8">{{ customer.nationality }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.gender %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>الجنس:</strong></div>
+                        <div class="col-sm-8">{{ customer.gender }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.marital_status %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>الحالة الاجتماعية:</strong></div>
+                        <div class="col-sm-8">{{ customer.marital_status }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.address %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>العنوان:</strong></div>
+                        <div class="col-sm-8">{{ customer.address }}</div>
+                    </div>
+                    {% endif %}
+                    {% if customer.notes %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>الملاحظات:</strong></div>
+                        <div class="col-sm-8">{{ customer.notes }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>تاريخ الإضافة:</strong></div>
+                        <div class="col-sm-8">{{ customer.created_at|egypt_time }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>بواسطة (إنشاء):</strong></div>
+                        <div class="col-sm-8"><span class="badge bg-light text-dark border">{{ customer.created_by or 'غير معروف' }}</span></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>بواسطة (تعديل):</strong></div>
+                        <div class="col-sm-8"><span class="badge bg-light text-dark border">{{ customer.updated_by or 'لم يتم التعديل' }}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إحصائيات الوثائق -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>إحصائيات الوثائق
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-number text-primary">{{ customer.documents_count }}</div>
+                                <div class="stat-label">المجموع</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-number text-success">{{ customer.scanned_documents_count }}</div>
+                                <div class="stat-label">ممسوحة</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-number text-info">{{ customer.uploaded_documents_count }}</div>
+                                <div class="stat-label">مرفوعة</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الوثائق والمستندات -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-folder-open me-2"></i>الوثائق والمستندات
+                        <span class="badge bg-light text-dark ms-2">{{ documents|length }}</span>
+                    </h5>
+                    <div>
+                        <button type="button" class="btn btn-light btn-sm me-2" id="addDocumentsBtn">
+                            <i class="fas fa-plus me-1"></i>إضافة وثائق
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-light btn-sm" id="gridViewBtn">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="listViewBtn">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                        <!-- عرض شبكي -->
+                        <div id="gridView" class="documents-grid">
+                            <div class="row">
+                                {% for document in documents %}
+                                <div class="col-md-4 col-lg-3 mb-3">
+                                    <div class="document-card card h-100">
+                                        <div class="card-body text-center p-3">
+                                            <div class="document-icon mb-2">
+                                                {% if document.is_image %}
+                                                    <img src="{{ document.file_url }}" class="img-thumbnail" style="max-height: 80px; max-width: 80px;" alt="{{ document.original_name }}">
+                                                {% else %}
+                                                    <i class="{{ document.icon_class }} fa-3x"></i>
+                                                {% endif %}
+                                            </div>
+                                            <h6 class="card-title small mb-1" title="{{ document.original_name }}">
+                                                {{ document.original_name[:20] }}{% if document.original_name|length > 20 %}...{% endif %}
+                                            </h6>
+                                            <p class="card-text small text-muted mb-2">
+                                                {{ document.file_size_formatted }}<br>
+                                                {{ document.scan_method_display }}
+                                                {% if document.pages_count > 1 %}
+                                                    <br><span class="badge bg-info">{{ document.pages_count }} صفحة</span>
+                                                {% endif %}
+                                            </p>
+                                            <div class="document-actions">
+                                                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="previewDocument({{ document.id }})">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="printDocument({{ document.id }})">
+                                                    <i class="fas fa-print"></i>
+                                                </button>
+                                                <a href="{{ url_for('customer_new.download_document', doc_id=document.id) }}" class="btn btn-sm btn-outline-info me-1">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDocument({{ document.id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer small text-muted">
+                                            {{ document.upload_date|egypt_time }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- عرض قائمة -->
+                        <div id="listView" class="documents-list" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>الوثيقة</th>
+                                            <th>النوع</th>
+                                            <th>الحجم</th>
+                                            <th>الطريقة</th>
+                                            <th>التاريخ</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for document in documents %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="{{ document.icon_class }} me-2"></i>
+                                                    <div>
+                                                        <div class="fw-bold">{{ document.original_name }}</div>
+                                                        {% if document.document_title %}
+                                                            <small class="text-muted">{{ document.document_title }}</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ document.file_type.upper() }}</span>
+                                                {% if document.pages_count > 1 %}
+                                                    <br><small class="text-muted">{{ document.pages_count }} صفحة</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ document.file_size_formatted }}</td>
+                                            <td>
+                                                <span class="badge {% if document.is_scanned %}bg-success{% else %}bg-primary{% endif %}">
+                                                    {{ document.scan_method_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ document.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="previewDocument({{ document.id }})">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="printDocument({{ document.id }})">
+                                                        <i class="fas fa-print"></i>
+                                                    </button>
+                                                    <a href="{{ url_for('customer_new.download_document', doc_id=document.id) }}" class="btn btn-sm btn-outline-info">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDocument({{ document.id }})">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-5x text-muted mb-3"></i>
+                            <h5 class="text-muted">لا توجد وثائق مرفقة</h5>
+                            <p class="text-muted">يمكنك إضافة وثائق جديدة باستخدام الزر أعلاه</p>
+                            <button type="button" class="btn btn-primary" id="addFirstDocBtn">
+                                <i class="fas fa-plus me-2"></i>إضافة أول وثيقة
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لإضافة وثائق جديدة -->
+<div class="modal fade" id="addDocumentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>إضافة وثائق جديدة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-primary w-100" id="modalUploadBtn">
+                            <i class="fas fa-upload me-1"></i>رفع ملفات
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-success w-100" id="modalPrinterScanBtn">
+                            <i class="fas fa-scanner me-1"></i>ماسح ضوئي
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="upload-area border-2 border-dashed border-primary rounded p-4 text-center mb-3" id="modalUploadArea">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                    <h5>اسحب الملفات هنا أو انقر للاختيار</h5>
+                    <input type="file" id="modalDocumentFiles" multiple accept="*/*" style="display: none;">
+                </div>
+                
+                <div id="modalDocumentsList" class="documents-list">
+                    <!-- قائمة الوثائق المضافة -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="saveDocumentsBtn">
+                    <i class="fas fa-save me-1"></i>حفظ الوثائق
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لمعاينة الوثائق -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>معاينة الوثيقة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent" class="text-center">
+                    <!-- محتوى المعاينة -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="printPreviewBtn">
+                    <i class="fas fa-print me-1"></i>طباعة
+                </button>
+                <button type="button" class="btn btn-info" id="downloadPreviewBtn">
+                    <i class="fas fa-download me-1"></i>تحميل
+                </button>
+                <button type="button" class="btn btn-danger" id="deletePreviewBtn">
+                    <i class="fas fa-trash me-1"></i>حذف
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-box {
+    padding: 15px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.document-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.document-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.document-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.documents-grid .document-card {
+    border: 1px solid #dee2e6;
+}
+
+.upload-area {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd !important;
+}
+
+.upload-area.dragover {
+    background-color: #e3f2fd;
+}
+
+/* إصلاح مشاكل Modal و z-index */
+.modal {
+    z-index: 10500 !important;
+}
+
+.modal-backdrop {
+    z-index: 10499 !important;
+}
+
+.modal-dialog {
+    z-index: 10501 !important;
+    position: relative;
+}
+
+.modal-content {
+    z-index: 10502 !important;
+    position: relative;
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    z-index: 10503 !important;
+    position: relative;
+}
+
+.modal .btn {
+    z-index: 10504 !important;
+    position: relative;
+    pointer-events: auto !important;
+}
+
+.modal .btn:hover {
+    z-index: 10505 !important;
+}
+
+/* إصلاح مشاكل الأزرار في Modal */
+#addDocumentsModal .btn,
+#previewModal .btn {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 10504 !important;
+    cursor: pointer !important;
+}
+
+#addDocumentsModal .modal-footer .btn,
+#previewModal .modal-footer .btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10505 !important;
+}
+
+/* إصلاح مشاكل input file */
+#modalDocumentFiles {
+    pointer-events: auto !important;
+    z-index: 10504 !important;
+}
+
+/* إصلاح مشاكل منطقة الرفع */
+.upload-area {
+    pointer-events: auto !important;
+    z-index: 10503 !important;
+    position: relative;
+}
+
+/* إصلاح مشاكل الأزرار داخل منطقة الرفع */
+#modalUploadBtn,
+#modalPrinterScanBtn {
+    pointer-events: auto !important;
+    z-index: 10504 !important;
+    position: relative;
+    cursor: pointer !important;
+}
+
+/* إصلاح مشاكل backdrop */
+.modal-backdrop.show {
+    opacity: 0.5;
+    z-index: 10499 !important;
+}
+
+/* التأكد من أن Modal يظهر بشكل صحيح */
+.modal.show {
+    display: block !important;
+    z-index: 10500 !important;
+}
+
+.modal.show .modal-dialog {
+    transform: none !important;
+}
+
+/* إصلاح مشاكل النقر */
+.modal-content * {
+    pointer-events: auto !important;
+}
+
+/* إصلاح مشاكل الأزرار المحددة */
+#saveDocumentsBtn,
+#modalUploadBtn,
+#modalPrinterScanBtn {
+    background: #198754 !important;
+    border: none !important;
+    color: white !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.375rem !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    z-index: 10505 !important;
+    position: relative !important;
+}
+
+#saveDocumentsBtn:hover,
+#modalUploadBtn:hover,
+#modalPrinterScanBtn:hover {
+    background: #157347 !important;
+    transform: none !important;
+}
+    
+
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // عناصر DOM
+    const gridViewBtn = document.getElementById('gridViewBtn');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const addDocumentsBtn = document.getElementById('addDocumentsBtn');
+    const addFirstDocBtn = document.getElementById('addFirstDocBtn');
+    const addDocumentsModal = new bootstrap.Modal(document.getElementById('addDocumentsModal'));
+    const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+    
+    let currentPreviewDocId = null;
+    
+    // إعداد أزرار العرض
+    if (gridViewBtn && listViewBtn) {
+        gridViewBtn.addEventListener('click', () => {
+            gridView.style.display = 'block';
+            listView.style.display = 'none';
+            gridViewBtn.classList.add('active');
+            listViewBtn.classList.remove('active');
+        });
+        
+        listViewBtn.addEventListener('click', () => {
+            gridView.style.display = 'none';
+            listView.style.display = 'block';
+            listViewBtn.classList.add('active');
+            gridViewBtn.classList.remove('active');
+        });
+    }
+    
+    // إعداد أزرار إضافة الوثائق
+    if (addDocumentsBtn) {
+        addDocumentsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('تم النقر على زر إضافة وثائق');
+            addDocumentsModal.show();
+        });
+    }
+    
+    if (addFirstDocBtn) {
+        addFirstDocBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('تم النقر على زر إضافة أول وثيقة');
+            addDocumentsModal.show();
+        });
+    }
+    
+    // إضافة معالج لأحداث Modal
+    const addDocumentsModalElement = document.getElementById('addDocumentsModal');
+    if (addDocumentsModalElement) {
+        addDocumentsModalElement.addEventListener('shown.bs.modal', function () {
+            console.log('تم فتح modal إضافة الوثائق');
+            
+            // إصلاح z-index للعناصر
+            this.style.zIndex = '10500';
+            
+            // إصلاح الأزرار
+            const buttons = this.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                btn.style.pointerEvents = 'auto';
+                btn.style.cursor = 'pointer';
+                btn.style.zIndex = '10504';
+                btn.style.position = 'relative';
+            });
+            
+            // إصلاح منطقة الرفع
+            const uploadArea = this.querySelector('#modalUploadArea');
+            if (uploadArea) {
+                uploadArea.style.pointerEvents = 'auto';
+                uploadArea.style.cursor = 'pointer';
+                uploadArea.style.zIndex = '10503';
+            }
+            
+            // إصلاح backdrop
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.zIndex = '10499';
+                }
+            }, 100);
+        });
+        
+        addDocumentsModalElement.addEventListener('hide.bs.modal', function () {
+            console.log('تم إغلاق modal إضافة الوثائق');
+        });
+    }
+    
+    // إعداد modal إضافة الوثائق
+    setupAddDocumentsModal();
+    
+    // وظائف عامة
+    window.previewDocument = function(docId) {
+        currentPreviewDocId = docId;
+        
+        fetch(`/customers-new/api/document/${docId}/preview`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const doc = data.document;
+                    const previewContent = document.getElementById('previewContent');
+                    
+                    if (doc.is_image) {
+                        previewContent.innerHTML = `
+                            <img src="${doc.file_url}" class="img-fluid rounded" alt="${doc.original_name}">
+                            <div class="mt-3">
+                                <h5>${doc.original_name}</h5>
+                                <p class="text-muted">${doc.file_size} • ${doc.scan_method}</p>
+                            </div>
+                        `;
+                    } else if (doc.is_pdf) {
+                        previewContent.innerHTML = `
+                            <embed src="${doc.file_url}" type="application/pdf" width="100%" height="600px" />
+                            <div class="mt-3">
+                                <h5>${doc.original_name}</h5>
+                                <p class="text-muted">${doc.file_size} • ${doc.scan_method}</p>
+                            </div>
+                        `;
+                    } else {
+                        previewContent.innerHTML = `
+                            <div class="text-center">
+                                <i class="fas fa-file fa-5x text-muted mb-3"></i>
+                                <h5>${doc.original_name}</h5>
+                                <p class="text-muted">${doc.file_size} • ${doc.scan_method}</p>
+                                <p class="text-muted">معاينة غير متاحة لهذا النوع من الملفات</p>
+                                <a href="${doc.file_url}" class="btn btn-primary" target="_blank">
+                                    <i class="fas fa-external-link-alt me-1"></i>فتح في نافذة جديدة
+                                </a>
+                            </div>
+                        `;
+                    }
+                    
+                    // تحديث أزرار الـ modal
+                    document.getElementById('downloadPreviewBtn').onclick = function() {
+                        window.open(`/customers-new/document/${docId}/download`, '_blank');
+                    };
+
+                    document.getElementById('deletePreviewBtn').onclick = function() {
+                        deleteDocument(docId);
+                    };
+
+                    document.getElementById('printPreviewBtn').onclick = function() {
+                        // استخدم مسار العرض لعرض الـ PDF/صورة inline ثم اطبع
+                        try {
+                            const viewUrl = `/customers-new/document/${docId}/view`;
+                            const win = window.open(viewUrl, '_blank');
+                            if (!win) {
+                                showAlert('يرجى السماح بفتح النوافذ المنبثقة في المتصفح لتتم الطباعة تلقائياً.', 'warning');
+                                return;
+                            }
+
+                            const checkLoaded = setInterval(() => {
+                                try {
+                                    if (win.document && (win.document.readyState === 'complete' || win.document.readyState === 'interactive')) {
+                                        clearInterval(checkLoaded);
+                                        setTimeout(() => { try { win.focus(); win.print(); } catch (err) {} }, 500);
+                                    }
+                                } catch (e) {
+                                    // في حال عدم السماح بالوصول إلى محتوى النافذة (cross-origin)، افتح رابط التحميل كبديل
+                                    clearInterval(checkLoaded);
+                                    const dl = window.open(`/customers-new/document/${docId}/download`, '_blank');
+                                    if (!dl) {
+                                        showAlert('تعذّر فتح نافذة الطباعة. يرجى تحميل الملف ثم طباعته يدوياً.', 'warning');
+                                        return;
+                                    }
+                                    const t = setInterval(() => {
+                                        try {
+                                            if (dl.document && (dl.document.readyState === 'complete' || dl.document.readyState === 'interactive')) {
+                                                clearInterval(t);
+                                                setTimeout(() => { try { dl.focus(); dl.print(); } catch (err) {} }, 500);
+                                            }
+                                        } catch (err) {
+                                            // تجاهل
+                                        }
+                                    }, 500);
+                                }
+                            }, 400);
+                        } catch (err) {
+                            console.error('printPreviewBtn error:', err);
+                            showAlert('حدث خطأ أثناء محاولة الطباعة.', 'error');
+                        }
+                    };
+                    
+                    previewModal.show();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('حدث خطأ في تحميل المعاينة', 'error');
+            });
+    };
+    
+    // طباعة الوثيقة مباشرة: تفتح عرض الوثيقة ثم تستدعي نافذة الطباعة
+    window.printDocument = function(docId) {
+        try {
+            // حاول فتح مسار العرض الذي يعرض الـ PDF/صورة بدون تحميل
+            const viewUrl = `/customers-new/document/${docId}/view`;
+            const win = window.open(viewUrl, '_blank');
+            if (!win) {
+                showAlert('يرجى السماح بفتح النوافذ المنبثقة في المتصفح لتتم الطباعة تلقائياً.', 'warning');
+                return;
+            }
+
+            // انتظر حتى يكتمل تحميل المستند ثم اطبع
+            const checkLoaded = setInterval(() => {
+                try {
+                    if (win.document && (win.document.readyState === 'complete' || win.document.readyState === 'interactive')) {
+                        clearInterval(checkLoaded);
+                        // تأخير صغير ليحصل المتصفح على وقت لترتيب المحتوى
+                        setTimeout(() => {
+                            try { win.focus(); win.print(); } catch (err) { /* if print fails, ignore */ }
+                        }, 500);
+                    }
+                } catch (e) {
+                    // إذا حدث خطأ وصول (cross-origin أو غيره) استخدم رابط التحميل كبديل
+                    clearInterval(checkLoaded);
+                    const dl = window.open(`/customers-new/document/${docId}/download`, '_blank');
+                    if (!dl) {
+                        showAlert('تعذّر فتح نافذة الطباعة. يرجى تحميل الملف ثم طباعته يدوياً.', 'warning');
+                        return;
+                    }
+                    const t = setInterval(() => {
+                        try {
+                            if (dl.document && (dl.document.readyState === 'complete' || dl.document.readyState === 'interactive')) {
+                                clearInterval(t);
+                                setTimeout(() => { try { dl.focus(); dl.print(); } catch (err) {} }, 500);
+                            }
+                        } catch (err) {
+                            // تجاهل أثناء الانتظار
+                        }
+                    }, 500);
+                }
+            }, 400);
+        } catch (err) {
+            console.error('printDocument error:', err);
+            showAlert('حدث خطأ أثناء محاولة الطباعة.', 'error');
+        }
+    };
+    
+    window.deleteDocument = function(docId) {
+        if (confirm('هل أنت متأكد من حذف هذه الوثيقة؟ لا يمكن التراجع عن هذا الإجراء.')) {
+            fetch(`/customers-new/api/document/${docId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then((data) => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => { location.reload(); }, 1000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('حدث خطأ في حذف الوثيقة', 'error');
+            });
+        }
+    };
+    
+    function setupAddDocumentsModal() {
+        const modalUploadArea = document.getElementById('modalUploadArea');
+        const modalDocumentFiles = document.getElementById('modalDocumentFiles');
+        const modalUploadBtn = document.getElementById('modalUploadBtn');
+        const modalScanBtn = document.getElementById('modalScanBtn');
+        const modalMultiScanBtn = document.getElementById('modalMultiScanBtn');
+        const saveDocumentsBtn = document.getElementById('saveDocumentsBtn');
+        
+        let pendingDocuments = [];
+        
+        // إصلاح مشاكل الأزرار - إضافة event listeners محسنة
+        if (modalUploadArea) {
+            modalUploadArea.style.pointerEvents = 'auto';
+            modalUploadArea.style.cursor = 'pointer';
+            modalUploadArea.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('تم النقر على منطقة الرفع');
+                if (modalDocumentFiles) {
+                    modalDocumentFiles.click();
+                }
+            });
+        }
+        
+        if (modalUploadBtn) {
+            modalUploadBtn.style.pointerEvents = 'auto';
+            modalUploadBtn.style.cursor = 'pointer';
+            modalUploadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('تم النقر على زر الرفع');
+                if (modalDocumentFiles) {
+                    modalDocumentFiles.click();
+                }
+            });
+        }
+        
+        // Unified scanner trigger: listen for 'openPrinterScanner' dispatched by modal-fix.js
+        const addDocumentsModalEl = document.getElementById('addDocumentsModal');
+        if (addDocumentsModalEl) {
+            addDocumentsModalEl.addEventListener('openPrinterScanner', (ev) => {
+                console.log('openPrinterScanner event received in modal, detail:', ev.detail);
+                // فتح الماسح في وضع multi-page — قالب آخر يتعامل مع واجهة الماسح
+                // Dispatch a local event that template scanner code listens to, or call scanner open function directly if available.
+                if (typeof openScanner === 'function') {
+                    currentScanMode = ev.detail?.mode || 'multi';
+                    openScanner();
+                } else {
+                    showAlert('ميزة المسح الضوئي قيد التطوير', 'info');
+                }
+            });
+        }
+        
+        if (saveDocumentsBtn) {
+            saveDocumentsBtn.style.pointerEvents = 'auto';
+            saveDocumentsBtn.style.cursor = 'pointer';
+            saveDocumentsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('تم النقر على زر حفظ الوثائق');
+                showAlert('لم يتم اختيار ملفات للحفظ', 'warning');
+            });
+        }
+        
+        if (modalDocumentFiles) {
+            modalDocumentFiles.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                console.log('تم اختيار ملفات:', files.length);
+                handleModalFiles(files);
+            });
+        }
+        
+        // السحب والإفلات
+        if (modalUploadArea) {
+            modalUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                modalUploadArea.classList.add('dragover');
+            });
+            
+            modalUploadArea.addEventListener('dragleave', () => {
+                modalUploadArea.classList.remove('dragover');
+            });
+            
+            modalUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                modalUploadArea.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                console.log('تم إسقاط ملفات:', files.length);
+                handleModalFiles(files);
+            });
+        }
+        
+        function handleModalFiles(files) {
+            const formData = new FormData();
+            formData.append('customer_id', {{ customer.id }});
+            
+            files.forEach(file => {
+                formData.append('documents', file);
+            });
+            
+            // رفع الملفات
+            fetch('/customers-new/api/upload-documents', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    addDocumentsModal.hide();
+                    // إعادة تحميل الصفحة لإظهار الوثائق الجديدة
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('حدث خطأ في رفع الوثائق', 'error');
+            });
+        }
+    }
+    
+    function showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

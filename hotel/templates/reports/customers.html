@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-5 text-gradient fw-bold mb-3">
+            <i class="fas fa-users me-3"></i>تقرير العملاء
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">الرئيسية</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">التقارير</a></li>
+                <li class="breadcrumb-item active">تقرير العملاء</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- إحصائيات العملاء -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4 col-md-6">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h4>{{ stats.total_customers }}</h4>
+                <small>إجمالي العملاء</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-star fa-2x mb-2"></i>
+                <h4>{{ stats.top_customers|length }}</h4>
+                <small>عملاء نشطين</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 col-md-6">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                <h4>{{ stats.top_customers|map(attribute='booking_count')|sum if stats.top_customers else 0 }}</h4>
+                <small>إجمالي الحجوزات</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- أفضل العملاء -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>أفضل 10 عملاء
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stats.top_customers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الترتيب</th>
+                                <th>العميل</th>
+                                <th>معلومات الاتصال</th>
+                                <th>عدد الحجوزات</th>
+                                <th>إجمالي الإنفاق</th>
+                                <th>متوسط الإنفاق</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer, booking_count, total_spent in stats.top_customers %}
+                            <tr>
+                                <td>
+                                    {% if loop.index <= 3 %}
+                                        <span class="badge bg-warning">
+                                            {% if loop.index == 1 %}🥇
+                                            {% elif loop.index == 2 %}🥈
+                                            {% else %}🥉
+                                            {% endif %}
+                                            {{ loop.index }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ loop.index }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">ID: {{ customer.id_number }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        {% if customer.phone %}
+                                            <i class="fas fa-phone text-success me-1"></i>{{ customer.phone }}
+                                            <br>
+                                        {% endif %}
+                                        {% if customer.address %}
+                                            <small class="text-muted">{{ customer.address[:50] }}{% if customer.address|length > 50 %}...{% endif %}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ booking_count }} حجز</span>
+                                </td>
+                                <td>
+                                    <strong class="text-success">جنيه{{ "%.2f"|format(total_spent or 0) }}</strong>
+                                </td>
+                                <td>
+                                    <span class="text-info">جنيه{{ "%.2f"|format((total_spent or 0) / booking_count) if booking_count > 0 else 0 }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-slash text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">لا يوجد عملاء نشطين</h5>
+                    <p class="text-muted">لا يوجد عملاء لديهم حجوزات حتى الآن</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول جميع العملاء -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>قائمة جميع العملاء
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="text" id="customerSearch" class="form-control" placeholder="البحث في العملاء...">
+                </div>
+                
+                {% if customers %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="customersTable">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>رقم الهوية</th>
+                                <th>معلومات الاتصال</th>
+                                <th>تاريخ التسجيل</th>
+                                <th>عدد الحجوزات</th>
+                                <th>آخر حجز</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>
+                                        {% if customer.bookings.count() > 5 %}
+                                            <span class="badge bg-warning ms-2" title="عميل مميز">⭐</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <code>{{ customer.id_number }}</code>
+                                </td>
+                                <td>
+                                    <div>
+                                        {% if customer.phone %}
+                                            <div>
+                                                <i class="fas fa-phone text-success me-1"></i>
+                                                {{ customer.phone }}
+                                            </div>
+                                        {% endif %}
+                                        {% if customer.address %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-map-marker-alt me-1"></i>
+                                                {{ customer.address[:30] }}{% if customer.address|length > 30 %}...{% endif %}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>{{ customer.created_at.strftime('%Y-%m-%d') }}</small>
+                                </td>
+                                <td>
+                                    {% set booking_count = customer.bookings.count() %}
+                                    {% if booking_count > 0 %}
+                                        <span class="badge bg-primary">{{ booking_count }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">لا يوجد</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('customer_new.details', id=customer.id) }}" class="btn btn-sm btn-outline-primary" title="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if current_user.can_manage_customers() %}
+                                        <a href="{{ url_for('customer.edit', id=customer.id) }}" class="btn btn-sm btn-outline-warning" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% if current_user.can_manage_bookings() %}
+                                        <a href="{{ url_for('booking.create', customer_id=customer.id) }}" class="btn btn-sm btn-outline-success" title="حجز جديد">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-user-plus text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">لا يوجد عملاء</h4>
+                    <p class="text-muted">لم يتم تسجيل أي عملاء في النظام بعد</p>
+                    {% if current_user.can_manage_customers() %}
+                    <a href="{{ url_for('customer.create') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-user-plus me-2"></i>إضافة عميل جديد
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات إضافية -->
+{% if customers %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>إحصائيات النشاط
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set active_customers = customers|selectattr('bookings')|list|length %}
+                {% set inactive_customers = customers|length - active_customers %}
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>عملاء نشطين</span>
+                    <strong class="text-success">{{ active_customers }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>عملاء غير نشطين</span>
+                    <strong class="text-warning">{{ inactive_customers }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>معدل النشاط</span>
+                    <strong class="text-primary">{{ "%.1f"|format((active_customers / customers|length) * 100) if customers else 0 }}%</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>إحصائيات زمنية
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set this_month_customers = 0 %}
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span>عملاء جدد هذا الشهر</span>
+                    <strong class="text-info">{{ this_month_customers }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>متوسط العملاء الشهري</span>
+                    <strong class="text-secondary">{{ "%.1f"|format(customers|length / 12) if customers else 0 }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>أقدم عميل</span>
+                    <strong class="text-muted">{{ customers|map(attribute='created_at')|min|strftime('%Y-%m-%d') if customers else 'لا يوجد' }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحسين وظيفة البحث
+        const searchInput = document.getElementById('customerSearch');
+        const table = document.getElementById('customersTable');
+        
+        if (searchInput && table) {
+            // إضافة مؤشر للحالة
+            const searchStatus = document.createElement('div');
+            searchStatus.className = 'search-status mt-2 mb-2 d-none';
+            searchStatus.innerHTML = '<i class="fas fa-search me-2"></i><span></span>';
+            searchInput.parentNode.appendChild(searchStatus);
+            
+            // تحسين وظيفة البحث مع تأخير للأداء الأفضل
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase().trim();
+                
+                // إظهار مؤشر البحث
+                if (searchText.length > 0) {
+                    searchStatus.classList.remove('d-none');
+                    searchStatus.querySelector('span').textContent = 'جاري البحث...';
+                } else {
+                    searchStatus.classList.add('d-none');
+                }
+                
+                // تأخير البحث لتحسين الأداء
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                    let matchCount = 0;
+                    
+                    for (let i = 0; i < rows.length; i++) {
+                        const rowText = rows[i].textContent.toLowerCase();
+                        const cells = rows[i].getElementsByTagName('td');
+                        let rowMatches = false;
+                        
+                        // البحث في كل خلية على حدة للدقة
+                        if (searchText.length > 0) {
+                            for (let j = 0; j < cells.length; j++) {
+                                const cellText = cells[j].textContent.toLowerCase();
+                                if (cellText.includes(searchText)) {
+                                    rowMatches = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            // إذا كان البحث فارغًا، إظهار كل الصفوف
+                            rowMatches = true;
+                        }
+                        
+                        // تحديث عرض الصف
+                        if (rowMatches) {
+                            rows[i].style.display = '';
+                            matchCount++;
+                        } else {
+                            rows[i].style.display = 'none';
+                        }
+                    }
+                    
+                    // تحديث حالة البحث
+                    if (searchText.length > 0) {
+                        searchStatus.querySelector('span').textContent = 
+                            matchCount > 0 ? `تم العثور على ${matchCount} نتيجة` : 'لا توجد نتائج';
+                        
+                        // تغيير لون مؤشر البحث حسب النتائج
+                        if (matchCount > 0) {
+                            searchStatus.className = 'search-status mt-2 mb-2 text-success';
+                        } else {
+                            searchStatus.className = 'search-status mt-2 mb-2 text-danger';
+                        }
+                    } else {
+                        searchStatus.classList.add('d-none');
+                    }
+                }, 300); // تأخير 300 مللي ثانية
+            });
+            
+            // إضافة زر مسح البحث
+            const clearButton = document.createElement('button');
+            clearButton.type = 'button';
+            clearButton.className = 'btn btn-sm btn-outline-secondary position-absolute';
+            clearButton.innerHTML = '<i class="fas fa-times"></i>';
+            clearButton.style.right = '10px';
+            clearButton.style.top = '50%';
+            clearButton.style.transform = 'translateY(-50%)';
+            clearButton.style.display = 'none';
+            
+            // وضع الزر داخل حاوية نسبية
+            const inputContainer = document.createElement('div');
+            inputContainer.className = 'position-relative';
+            searchInput.parentNode.insertBefore(inputContainer, searchInput);
+            inputContainer.appendChild(searchInput);
+            inputContainer.appendChild(clearButton);
+            
+            // إظهار/إخفاء زر المسح
+            searchInput.addEventListener('input', function() {
+                clearButton.style.display = this.value.length > 0 ? 'block' : 'none';
+            });
+            
+            // وظيفة مسح البحث
+            clearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
+    });
+</script>
+{% endblock %}

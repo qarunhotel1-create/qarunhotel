@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-clock me-2"></i>لوحة تحكم الديوز
+                </h2>
+                <div>
+                    <button class="btn btn-primary" onclick="refreshDeusStatus()">
+                        <i class="fas fa-sync-alt me-2"></i>تحديث
+                    </button>
+                    <a href="{{ url_for('booking.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>العودة للحجوزات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalActiveCount">{{ active_deus|length }}</h4>
+                            <p class="mb-0">ديوز نشط</p>
+                        </div>
+                        <i class="fas fa-play-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="warningCount">0</h4>
+                            <p class="mb-0">تحذيرات</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="expiredCount">0</h4>
+                            <p class="mb-0">منتهي اليوم</p>
+                        </div>
+                        <i class="fas fa-stop-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="lastUpdate">--:--</h4>
+                            <p class="mb-0">آخر تحديث</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الديوز النشط -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>الديوز النشط
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="activeDeusContainer">
+                        {% if active_deus %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>العميل</th>
+                                            <th>الغرفة</th>
+                                            <th>وقت البداية</th>
+                                            <th>وقت النهاية</th>
+                                            <th>الوقت المتبقي</th>
+                                            <th>الحالة</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="deusTableBody">
+                                        {% for deus in active_deus %}
+                                        <tr data-booking-id="{{ deus.booking_id }}">
+                                            <td>{{ deus.customer_name }}</td>
+                                            <td><span class="badge bg-secondary">{{ deus.room_number }}</span></td>
+                                            <td>{{ deus.start_time.strftime('%H:%M') if deus.start_time else '--' }}</td>
+                                            <td>{{ deus.end_time.strftime('%H:%M') if deus.end_time else '--' }}</td>
+                                            <td>
+                                                <span class="remaining-time" data-minutes="{{ deus.remaining_minutes }}">
+                                                    {{ deus.remaining_minutes }} دقيقة
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if deus.remaining_minutes <= 0 %}
+                                                    <span class="badge bg-danger">انتهى</span>
+                                                {% elif deus.remaining_minutes <= 15 %}
+                                                    <span class="badge bg-warning text-dark">ينتهي قريباً</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">نشط</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('booking.details', id=deus.booking_id) }}" 
+                                                   class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-clock text-muted" style="font-size: 4rem;"></i>
+                                <h4 class="text-muted mt-3">لا يوجد ديوز نشط</h4>
+                                <p class="text-muted">لا توجد حجوزات ديوز نشطة حالياً</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- منطقة الإشعارات -->
+    <div id="notificationsArea" class="mt-4"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تم إزالة التحديث التلقائي - المعلومات ثابتة ومرئية
+    // setInterval(refreshDeusStatus, 30000); // تم إزالة التحديث التلقائي
+    // setInterval(updateCountdowns, 1000); // تم إزالة العداد المتحرك
+
+    console.log('✅ تم تحميل لوحة تحكم الديوز - بدون تحديث تلقائي');
+});
+
+function refreshDeusStatus() {
+    console.log('🔄 تحديث حالة الديوز...');
+    
+    fetch('/bookings/check-deus-status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateDashboard(data);
+                showNotifications(data.expired_notifications, data.warnings);
+                updateLastUpdateTime();
+            } else {
+                console.error('خطأ في تحديث الديوز:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في الاتصال:', error);
+        });
+}
+
+function updateDashboard(data) {
+    // تحديث الإحصائيات
+    document.getElementById('totalActiveCount').textContent = data.active_deus.length;
+    document.getElementById('warningCount').textContent = data.warnings.length;
+    document.getElementById('expiredCount').textContent = data.expired_count;
+}
+
+function updateCountdowns() {
+    const remainingTimeElements = document.querySelectorAll('.remaining-time');
+    
+    remainingTimeElements.forEach(element => {
+        let minutes = parseInt(element.dataset.minutes);
+        if (minutes > 0) {
+            minutes--;
+            element.dataset.minutes = minutes;
+            element.textContent = minutes + ' دقيقة';
+            
+            // تحديث لون الحالة
+            const row = element.closest('tr');
+            const statusBadge = row.querySelector('.badge');
+            
+            if (minutes <= 0) {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.textContent = 'انتهى';
+            } else if (minutes <= 15) {
+                statusBadge.className = 'badge bg-warning text-dark';
+                statusBadge.textContent = 'ينتهي قريباً';
+            }
+        }
+    });
+}
+
+function showNotifications(expired, warnings) {
+    const notificationsArea = document.getElementById('notificationsArea');
+    let html = '';
+    
+    // إشعارات الانتهاء
+    expired.forEach(notification => {
+        html += `
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-stop-circle me-2"></i>
+                <strong>انتهى الديوز!</strong> ${notification.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    });
+    
+    // تحذيرات
+    warnings.forEach(warning => {
+        html += `
+            <div class="alert alert-warning alert-dismissible fade show">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>تحذير!</strong> ${warning.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    });
+    
+    notificationsArea.innerHTML = html;
+}
+
+function updateLastUpdateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('ar-EG', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    document.getElementById('lastUpdate').textContent = timeString;
+}
+</script>
+{% endblock %}

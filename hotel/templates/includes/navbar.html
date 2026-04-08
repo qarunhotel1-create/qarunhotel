@@ -1,0 +1,116 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+            <div class="bg-gradient-primary text-white rounded-circle p-2 me-3">
+                <i class="fas fa-hotel"></i>
+            </div>
+            <span class="text-gradient fw-bold fs-4">QARUN HOTEL</span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.can_access_admin_panel() %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-1"></i>لوحة التحكم
+                            </a>
+                        </li>
+                        {% if current_user.can_manage_rooms() %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint.startswith('room.') %}active{% endif %}" href="{{ url_for('room.index') }}">
+                                <i class="fas fa-door-open me-1"></i>الغرف
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if current_user.can_manage_users() %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}" href="{{ url_for('admin.users') }}">
+                                <i class="fas fa-user-shield me-1"></i>المستخدمين
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'user.dashboard' %}active{% endif %}" href="{{ url_for('user.dashboard') }}">
+                                <i class="fas fa-user-cog me-1"></i>لوحة التحكم
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <!-- القوائم المشتركة بين Admin والمستخدمين العاديين -->
+                    {% if current_user.can_manage_bookings() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint.startswith('booking.') and request.endpoint != 'booking.my_bookings' %}active{% endif %}" href="{{ url_for('booking.index') }}">
+                            <i class="fas fa-calendar-check me-1"></i>الحجوزات
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.can_manage_customers() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint.startswith('customer_new.') %}active{% endif %}" href="{{ url_for('customer_new.index') }}">
+                            <i class="fas fa-users me-1"></i>العملاء
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.can_view_reports() %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint.startswith('reports.') %}active{% endif %}" href="{{ url_for('reports.index') }}">
+                            <i class="fas fa-chart-bar me-1"></i>التقارير
+                        </a>
+                    </li>
+                    {% endif %}
+
+
+
+                    <!-- Notes/Chat link -->
+                    <li class="nav-item position-relative">
+                        <a class="nav-link {% if request.endpoint.startswith('notes.') %}active{% endif %}" href="/notes/">
+                            <i class="fas fa-comments me-1"></i>الملاحظات
+                            {% if pending_notes_count and pending_notes_count > 0 %}
+                              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ pending_notes_count }}
+                              </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+            
+            <ul class="navbar-nav">
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="bg-gradient-primary text-white rounded-circle p-1 me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="fw-semibold">{{ current_user.full_name or current_user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" aria-labelledby="navbarDropdown" style="border-radius: 0.75rem; overflow: hidden;">
+                            <li>
+                                <a class="dropdown-item py-2 px-3" href="{{ url_for('auth.change_password') }}">
+                                    <i class="fas fa-key me-2 text-warning"></i>تغيير كلمة المرور
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a class="dropdown-item py-2 px-3 text-danger" href="{{ url_for('auth.logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" href="{{ url_for('auth.login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>تسجيل الدخول
+                        </a>
+                    </li>
+                    
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

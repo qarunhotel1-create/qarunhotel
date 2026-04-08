@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="mb-4">
+            <i class="fas fa-door-open me-2"></i>الغرف المتاحة
+        </h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('booking.create') }}" class="btn btn-primary">
+            <i class="fas fa-calendar-plus me-1"></i>حجز جديد
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>بحث عن غرفة
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('room.available') }}" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="room_type" class="form-label">نوع الغرفة</label>
+                        <select name="room_type" id="room_type" class="form-select">
+                            <option value="">جميع الأنواع</option>
+                            <option value="single">Single</option>
+                            <option value="double">Double</option>
+                            <option value="triple">Triple</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="capacity" class="form-label">السعة</label>
+                        <select name="capacity" id="capacity" class="form-select">
+                            <option value="">أي سعة</option>
+                            <option value="1">1 شخص</option>
+                            <option value="2">2 شخص</option>
+                            <option value="3">3 أشخاص</option>
+                            <option value="4">4 أشخاص أو أكثر</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="max_price" class="form-label">أقصى سعر لليلة</label>
+                        <input type="number" name="max_price" id="max_price" class="form-control" min="0">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i>بحث
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for room in rooms %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">غرفة {{ room.room_number }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="mb-1 text-muted">نوع الغرفة</p>
+                    <h5>
+                        {% if room.room_type == 'single' %}
+                            Single
+                        {% elif room.room_type == 'double' %}
+                            Double
+                        {% elif room.room_type == 'triple' %}
+                            Triple
+                        {% endif %}
+                    </h5>
+                </div>
+
+                <div class="mb-3">
+                    <p class="mb-1 text-muted">السعة</p>
+                    <h5>{{ room.capacity }} شخص</h5>
+                </div>
+
+                <div class="mb-3">
+                    <p class="mb-1 text-muted">السعر لليلة الواحدة</p>
+                    <h5 class="text-success">{{ room.price_per_night }} جنيه</h5>
+                </div>
+
+                {% if room.description %}
+                <div class="mb-3">
+                    <p class="mb-1 text-muted">وصف الغرفة</p>
+                    <p>{{ room.description|truncate(100) }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('booking.create', room_id=room.id) }}" class="btn btn-primary">
+                        <i class="fas fa-calendar-plus me-1"></i>حجز الغرفة
+                    </a>
+                    <a href="{{ url_for('room.details', id=room.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-info-circle me-1"></i>تفاصيل الغرفة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>لا توجد غرف متاحة حالياً
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

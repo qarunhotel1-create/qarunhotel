@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">سجل النشاطات</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>المستخدم</th>
+                <th>الإجراء</th>
+                <th>التفاصيل</th>
+                <th>الوقت</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs.items %}
+            <tr>
+                <td>{{ log.user_full_name }}</td>
+                <td>{{ log.action }}</td>
+                <td>{{ log.details }}</td>
+                <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pagination">
+        {% if logs.has_prev %}
+            <a href="{{ url_for('admin.activity_log', page=logs.prev_num) }}">السابق</a>
+        {% endif %}
+        Page {{ logs.page }} of {{ logs.pages }}
+        {% if logs.has_next %}
+            <a href="{{ url_for('admin.activity_log', page=logs.next_num) }}">التالي</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-history me-2"></i>تاريخ تعديل الحجز
+                </h2>
+                <div>
+                    <a href="{{ url_for('booking.details', id=booking.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>العودة للحجز
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الحجز -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>معلومات الحجز
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <p><strong>رقم الحجز:</strong> #{{ booking.booking_code or booking.id }}</p>
+                            <p><strong>العميل:</strong> {{ booking.customer.name }}</p>
+                            <p><strong>الغرفة:</strong> {{ booking.room.room_number }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p><strong>نوع الحساب:</strong> 
+                                {% if booking.is_deus %}
+                                    <span class="badge bg-warning text-dark">ديوز</span>
+                                {% else %}
+                                    <span class="badge bg-success">عادي</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>الحالة:</strong> 
+                                {% if booking.status == 'pending' %}
+                                    <span class="badge bg-warning">في الانتظار</span>
+                                {% elif booking.status == 'confirmed' %}
+                                    <span class="badge bg-primary">مؤكد</span>
+                                {% elif booking.status == 'checked_in' %}
+                                    <span class="badge bg-success">تم تسجيل الدخول</span>
+                                {% elif booking.status == 'checked_out' %}
+                                    <span class="badge bg-secondary">تم تسجيل الخروج</span>
+                                {% elif booking.status == 'cancelled' %}
+                                    <span class="badge bg-danger">ملغي</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <p><strong>التواريخ الحالية:</strong></p>
+                            <p>من: {{ booking.check_in_date.strftime('%Y-%m-%d') }}</p>
+                            <p>إلى: {{ booking.check_out_date.strftime('%Y-%m-%d') }}</p>
+                            <p><strong>المدة:</strong> {{ (booking.check_out_date - booking.check_in_date).days }} ليلة</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p><strong>نوع الإقامة:</strong> {{ booking.occupancy_type.upper() }}</p>
+                            <p><strong>السعر الحالي:</strong> {{ booking.total_price }} جنيه</p>
+                            {% if booking.discount_percentage %}
+                            <p><strong>الخصم:</strong> {{ booking.discount_percentage }}%</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- تاريخ التعديل -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>سجل التعديلات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if edits %}
+                        <div class="timeline">
+                            {% for edit in edits %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-warning">
+                                    <i class="fas fa-edit"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">
+                                                    تعديل الحجز #{{ booking.booking_code or booking.id }}
+                                                </h6>
+                                                <small class="text-muted">{{ edit.edit_time_display }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-muted">البيانات القديمة:</h6>
+                                                    <p><strong>التواريخ:</strong> 
+                                                        {{ edit.old_check_in_date.strftime('%Y-%m-%d') }} إلى 
+                                                        {{ edit.old_check_out_date.strftime('%Y-%m-%d') }}
+                                                        ({{ edit.old_nights }} ليلة)
+                                                    </p>
+                                                    <p><strong>نوع الإقامة:</strong> 
+                                                        <span class="badge bg-secondary">{{ edit.old_occupancy_type.upper() }}</span>
+                                                    </p>
+                                                    <p><strong>السعر:</strong> {{ edit.old_total_price }} جنيه</p>
+                                                    {% if edit.old_discount_percentage %}
+                                                    <p><strong>الخصم:</strong> {{ edit.old_discount_percentage }}%</p>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-muted">البيانات الجديدة:</h6>
+                                                    <p><strong>التواريخ:</strong> 
+                                                        {{ edit.new_check_in_date.strftime('%Y-%m-%d') }} إلى 
+                                                        {{ edit.new_check_out_date.strftime('%Y-%m-%d') }}
+                                                        ({{ edit.new_nights }} ليلة)
+                                                    </p>
+                                                    <p><strong>نوع الإقامة:</strong> 
+                                                        <span class="badge bg-primary">{{ edit.new_occupancy_type.upper() }}</span>
+                                                    </p>
+                                                    <p><strong>السعر:</strong> {{ edit.new_total_price }} جنيه</p>
+                                                    {% if edit.new_discount_percentage %}
+                                                    <p><strong>الخصم:</strong> {{ edit.new_discount_percentage }}%</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- ملخص التغييرات -->
+                                            <div class="row mt-3">
+                                                <div class="col-12">
+                                                    <div class="card bg-light">
+                                                        <div class="card-body">
+                                                            <h6 class="card-title">ملخص التغييرات:</h6>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <p><strong>تغيير المدة:</strong> 
+                                                                        <span class="{% if edit.nights_difference > 0 %}text-success{% elif edit.nights_difference < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                                                            {{ edit.nights_change_display }}
+                                                                        </span>
+                                                                    </p>
+                                                                    <p><strong>تغيير نوع الإقامة:</strong> {{ edit.occupancy_change_display }}</p>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <p><strong>تغيير السعر:</strong> 
+                                                                        <span class="{% if edit.price_adjustment > 0 %}text-danger{% elif edit.price_adjustment < 0 %}text-success{% else %}text-muted{% endif %}">
+                                                                            {{ edit.price_change_display }}
+                                                                        </span>
+                                                                    </p>
+                                                                    <p><strong>تم التعديل بواسطة:</strong> {{ edit.edited_by_user.username }}</p>
+                                                                </div>
+                                                            </div>
+                                                            {% if edit.edit_reason %}
+                                                            <p><strong>سبب التعديل:</strong> {{ edit.edit_reason }}</p>
+                                                            {% endif %}
+                                                            {% if edit.notes %}
+                                                            <p><strong>ملاحظات:</strong> {{ edit.notes }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-edit text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted mt-3">لا يوجد تاريخ تعديل</h4>
+                            <p class="text-muted">لم يتم تعديل هذا الحجز بعد</p>
+                            <a href="{{ url_for('booking.edit', id=booking.id) }}"
+                               class="btn btn-warning mt-2">
+                                <i class="fas fa-edit me-2"></i>تعديل الحجز
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ملخص التعديلات -->
+    {% if edits %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>ملخص التعديلات
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>إحصائيات التعديل:</h6>
+                            <p><strong>عدد مرات التعديل:</strong> {{ edits|length }}</p>
+                            <p><strong>آخر تعديل:</strong> {{ edits[0].edit_time_display }}</p>
+                            <p><strong>أول تعديل:</strong> {{ edits[-1].edit_time_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>التغييرات الإجمالية:</h6>
+                            {% set total_price_change = booking.total_price - edits[-1].old_total_price %}
+                            {% set total_nights_change = (booking.check_out_date - booking.check_in_date).days - edits[-1].old_nights %}
+                            
+                            <p><strong>تغيير السعر الإجمالي:</strong> 
+                                <span class="{% if total_price_change > 0 %}text-danger{% elif total_price_change < 0 %}text-success{% else %}text-muted{% endif %}">
+                                    {% if total_price_change > 0 %}+{% endif %}{{ total_price_change }} جنيه
+                                </span>
+                            </p>
+                            <p><strong>تغيير المدة الإجمالي:</strong> 
+                                <span class="{% if total_nights_change > 0 %}text-success{% elif total_nights_change < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                    {% if total_nights_change > 0 %}+{% endif %}{{ total_nights_change }} ليلة
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
+.timeline-content {
+    margin-left: 20px;
+}
+</style>
+{% endblock %}

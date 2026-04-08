@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4">
+            <i class="fas fa-trash-alt me-2 text-danger"></i>مسح جميع بيانات الحجوزات
+        </h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">الرئيسية</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">لوحة التحكم</a></li>
+                <li class="breadcrumb-item active">مسح البيانات</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>تحذير: مسح جميع بيانات الحجوزات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>تحذير مهم!</h6>
+                    <p class="mb-0">هذا الإجراء سيقوم بحذف جميع البيانات التالية نهائياً:</p>
+                    <ul class="mt-2 mb-0">
+                        <li>جميع الحجوزات</li>
+                        <li>جميع المدفوعات</li>
+                        <li>إعادة تعيين جميع الغرف كمتاحة</li>
+                    </ul>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-primary">{{ total_bookings }}</h3>
+                                <p class="mb-0">حجز</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-success">{{ total_payments }}</h3>
+                                <p class="mb-0">مدفوعة</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-info">{{ total_rooms }}</h3>
+                                <p class="mb-0">غرفة</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if total_bookings > 0 or total_payments > 0 %}
+                <form method="POST" action="{{ url_for('admin.clear_bookings') }}" id="clearForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmClear" required>
+                        <label class="form-check-label text-danger fw-bold" for="confirmClear">
+                            أؤكد أنني أريد حذف جميع بيانات الحجوزات نهائياً
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="clearBtn" disabled>
+                            <i class="fas fa-trash-alt me-1"></i>مسح جميع البيانات
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    لا توجد بيانات حجوزات أو مدفوعات لحذفها.
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i>العودة للوحة التحكم
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>معلومات مهمة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>قبل المسح:</h6>
+                    <ul class="mb-0">
+                        <li>تأكد من عمل نسخة احتياطية</li>
+                        <li>أبلغ جميع المستخدمين</li>
+                        <li>تأكد من عدم وجود حجوزات مهمة</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>بعد المسح:</h6>
+                    <ul class="mb-0">
+                        <li>جميع الغرف ستصبح متاحة</li>
+                        <li>يمكن البدء في حجوزات جديدة</li>
+                        <li>لن تكون هناك تعارضات في التواريخ</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-rocket me-2"></i>الأسعار الجديدة:</h6>
+                    <ul class="mb-0">
+                        <li>Single: 800 جنيه/ليلة</li>
+                        <li>Double: 1,100 جنيه/ليلة</li>
+                        <li>Triple: 1,400 جنيه/ليلة</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmClear');
+    const clearBtn = document.getElementById('clearBtn');
+    const clearForm = document.getElementById('clearForm');
+    
+    if (confirmCheckbox && clearBtn) {
+        confirmCheckbox.addEventListener('change', function() {
+            clearBtn.disabled = !this.checked;
+        });
+        
+        if (clearForm) {
+            clearForm.addEventListener('submit', function(e) {
+                if (!confirmCheckbox.checked) {
+                    e.preventDefault();
+                    alert('يجب تأكيد الموافقة على حذف البيانات');
+                    return false;
+                }
+                
+                const confirmed = confirm('هل أنت متأكد من حذف جميع بيانات الحجوزات؟\n\nهذا الإجراء لا يمكن التراجع عنه!');
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // إظهار مؤشر التحميل
+                clearBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري المسح...';
+                clearBtn.disabled = true;
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

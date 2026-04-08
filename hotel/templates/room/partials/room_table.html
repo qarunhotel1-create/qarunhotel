@@ -1,0 +1,180 @@
+{% set display_rooms = filtered_rooms if filtered_rooms is defined else rooms %}
+
+{% if display_rooms|length > 0 %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th class="fw-bold">رقم الغرفة</th>
+                <th class="fw-bold">نوع الغرفة</th>
+                <th class="fw-bold">السعة</th>
+                <th class="fw-bold">السعر لليلة</th>
+                <th class="fw-bold">الحالة</th>
+                <th class="fw-bold">معلومات الحجز</th>
+                <th class="fw-bold">الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in display_rooms %}
+            <tr class="fade-in">
+                <td>
+                    <span class="badge bg-secondary fs-6">{{ room.room_number }}</span>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        {% if room.room_type == 'single' %}
+                            <i class="fas fa-bed text-primary me-2"></i>Single
+                        {% elif room.room_type == 'double' %}
+                            <i class="fas fa-bed text-info me-2"></i>Double
+                        {% elif room.room_type == 'triple' %}
+                            <i class="fas fa-bed text-success me-2"></i>Triple
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-info">{{ room.capacity }} شخص</span>
+                </td>
+                <td class="fw-semibold text-success">{{ room.price_per_night }} جنيه</td>
+                <td>
+                    {% if room.status == 'maintenance' %}
+                        <span class="badge bg-warning">
+                            <i class="fas fa-tools me-1"></i>صيانة
+                        </span>
+                    {% else %}
+                        {% set has_active_booking = room.has_active_booking if room.has_active_booking is defined else false %}
+                        {% if has_active_booking %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-user me-1"></i>محجوزة
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>متاحة
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if room.has_active_booking and room.active_booking_info %}
+                        {% set booking = room.active_booking_info %}
+                        <div class="booking-info">
+                            <div class="mb-1">
+                                <strong class="text-primary">
+                                    <i class="fas fa-user me-1"></i>{{ booking.customer.name }}
+                                </strong>
+                            </div>
+                            <div class="small text-muted mb-1">
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                حُجزت: {{ booking.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                            <div class="small text-success">
+                                <i class="fas fa-sign-in-alt me-1"></i>
+                                دخول: {{ booking.check_in_date.strftime('%d/%m/%Y') }} - 1:00م
+                            </div>
+                            <div class="small text-danger">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                خروج: {{ booking.check_out_date.strftime('%d/%m/%Y') }} - 12:00م
+                            </div>
+                            <div class="small">
+                                <span class="badge bg-info">{{ booking.status }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <span class="text-muted small">
+                            <i class="fas fa-minus me-1"></i>لا توجد حجوزات
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('room.details', id=room.id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="عرض التفاصيل">
+                            <i class="fas fa-eye"></i>
+                        </a>
+
+                        {% if current_user.is_admin() %}
+                        <a href="{{ url_for('room.edit', id=room.id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="تعديل">
+                            <i class="fas fa-edit"></i>
+                        </a>
+
+                        <form action="{{ url_for('room.delete', id=room.id) }}" method="POST" style="display: inline;" id="deleteRoomForm{{ room.id }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteRoomSimple({{ room.id }}, '{{ room.room_number }}', {{ room.bookings.count() }})" title="حذف">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if room.status == 'available' %}
+                        <a href="{{ url_for('booking.create', room_id=room.id) }}" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="حجز الغرفة">
+                            <i class="fas fa-calendar-plus"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-door-closed text-muted" style="font-size: 4rem;"></i>
+    <h4 class="text-muted mt-3">لا توجد غرف</h4>
+    <p class="text-muted">لا توجد غرف في هذه القائمة حالياً</p>
+    {% if current_user.is_admin() %}
+    <a href="{{ url_for('room.create') }}" class="btn btn-primary mt-2">
+        <i class="fas fa-plus me-2"></i>إضافة غرفة جديدة
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+// حل بسيط جداً لحذف الغرف - استخدام confirm بدلاً من modal
+function deleteRoomSimple(roomId, roomNumber, bookingsCount) {
+    if (bookingsCount > 0) {
+        alert('لا يمكن حذف هذه الغرفة لأنها مرتبطة بـ ' + bookingsCount + ' حجز.\n\nيجب إلغاء جميع الحجوزات أولاً قبل حذف الغرفة.');
+        return;
+    }
+
+    const confirmed = confirm(
+        'هل أنت متأكد من رغبتك في حذف هذه الغرفة؟\n\n' +
+        'رقم الغرفة: ' + roomNumber + '\n' +
+        'رقم الغرفة في النظام: ' + roomId + '\n\n' +
+        'لا يمكن التراجع عن هذا الإجراء.\n\n' +
+        'اضغط "موافق" للتأكيد أو "إلغاء" للتراجع.'
+    );
+
+    if (confirmed) {
+        const form = document.getElementById('deleteRoomForm' + roomId);
+        if (form) {
+            form.submit();
+        } else {
+            alert('حدث خطأ في حذف الغرفة. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+        }
+    }
+}
+</script>
+
+<style>
+.booking-info {
+    max-width: 200px;
+    font-size: 0.85rem;
+}
+
+.booking-info .small {
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
+.booking-info .badge {
+    font-size: 0.7rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.booking-info strong {
+    font-size: 0.8rem;
+}
+</style>

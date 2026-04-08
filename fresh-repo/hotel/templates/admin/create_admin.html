@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4">
+            <i class="fas fa-user-plus me-2"></i>إنشاء حساب مسؤول جديد
+        </h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">الرئيسية</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">لوحة التحكم</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">إدارة المستخدمين</a></li>
+                <li class="breadcrumb-item active">إنشاء حساب مسؤول جديد</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>بيانات المسؤول الجديد
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.create_admin') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control") }}
+                        {% for error in form.username.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>ملاحظة:</strong> يمكن استخدام أي كلمة مرور بأي طول (حتى حرف واحد).
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control", placeholder="أي كلمة مرور") }}
+                            {% for error in form.password.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.password2.label(class="form-label") }}
+                            {{ form.password2(class="form-control", placeholder="أعد إدخال كلمة المرور") }}
+                            {% for error in form.password2.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>معلومات مساعدة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>تعليمات إنشاء حساب مسؤول:
+                    <ul class="mb-0 mt-2">
+                        <li>اسم المستخدم يجب أن يكون فريدًا</li>
+
+                        <li>كلمة المرور يجب أن تكون قوية وآمنة</li>
+                        <li>المسؤول سيكون لديه صلاحيات كاملة في النظام</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>ملاحظات هامة:
+                    <ul class="mb-0 mt-2">
+                        <li>تأكد من إعطاء صلاحيات المسؤول للأشخاص الموثوق بهم فقط</li>
+                        <li>يمكن للمسؤول الوصول إلى جميع البيانات وتعديلها</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

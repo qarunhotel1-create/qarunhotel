@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>اختبار API الحظر</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>اختبار زر حظر العميل</h1>
+    
+    <button onclick="testBlockAPI()">اختبار حظر العميل رقم 1</button>
+    <button onclick="testUnblockAPI()">اختبار إلغاء حظر العميل رقم 1</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function testBlockAPI() {
+            console.log('اختبار حظر العميل...');
+            
+            fetch('/customer_new/block/1', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    reason: 'اختبار الحظر'
+                })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                document.getElementById('result').innerHTML = 
+                    '<p>نتيجة الحظر: ' + JSON.stringify(data) + '</p>';
+            })
+            .catch(error => {
+                console.error('خطأ:', error);
+                document.getElementById('result').innerHTML = 
+                    '<p>خطأ: ' + error.message + '</p>';
+            });
+        }
+        
+        function testUnblockAPI() {
+            console.log('اختبار إلغاء حظر العميل...');
+            
+            fetch('/customer_new/unblock/1', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                document.getElementById('result').innerHTML = 
+                    '<p>نتيجة إلغاء الحظر: ' + JSON.stringify(data) + '</p>';
+            })
+            .catch(error => {
+                console.error('خطأ:', error);
+                document.getElementById('result').innerHTML = 
+                    '<p>خطأ: ' + error.message + '</p>';
+            });
+        }
+    </script>
+</body>
+</html>

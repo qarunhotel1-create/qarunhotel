@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-user-plus me-2 text-primary"></i>{{ title }}
+                    </h2>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('main.user_dashboard') }}">الرئيسية</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('customer.index') }}">العملاء</a></li>
+                            <li class="breadcrumb-item active">إضافة عميل جديد</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{{ url_for('customer.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>العودة للقائمة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="customerForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <!-- بيانات العميل الأساسية -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>البيانات الأساسية
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.name.label(class="form-label required") }}
+                                {{ form.name(class="form-control") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.name.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.id_number.label(class="form-label required") }}
+                                {{ form.id_number(class="form-control", maxlength="14") }}
+                                {% if form.id_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.id_number.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.phone.label(class="form-label") }}
+                                {{ form.phone(class="form-control") }}
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.nationality.label(class="form-label") }}
+                                {{ form.nationality(class="form-control", id="nationality") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3" id="nationality_other_field" style="display: none;">
+                                {{ form.nationality_other.label(class="form-label") }}
+                                {{ form.nationality_other(class="form-control") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.marital_status.label(class="form-label") }}
+                                {{ form.marital_status(class="form-control") }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.address.label(class="form-label") }}
+                            {{ form.address(class="form-control", rows="3") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- نظام الوثائق الجديد -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-upload me-2"></i>الوثائق والمستندات
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- أزرار الإضافة -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-primary w-100" id="uploadFilesBtn">
+                                    <i class="fas fa-upload me-1"></i>رفع ملفات
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-success w-100" id="printerScanBtn">
+                                    <i class="fas fa-scanner me-1"></i>ماسح ضوئي
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- منطقة رفع الملفات -->
+                        <div class="upload-area border-2 border-dashed border-primary rounded p-4 text-center mb-3" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                            <h5>اسحب الملفات هنا أو انقر للاختيار</h5>
+                            <p class="text-muted">يدعم جميع أنواع الملفات (صور، PDF، مستندات)</p>
+                            <input type="file" id="documentFiles" name="document_files" multiple accept="*/*" style="display: none;">
+                        </div>
+                        
+                        <!-- قائمة الوثائق المضافة -->
+                        <div id="documentsPreview" class="documents-preview">
+                            <h6 class="text-muted mb-2">الوثائق المضافة:</h6>
+                            <div id="documentsList" class="documents-list">
+                                <!-- ستتم إضافة الوثائق هنا ديناميكياً -->
+                            </div>
+                        </div>
+                        
+                        <!-- إحصائيات -->
+                        <div class="row mt-3">
+                            <div class="col-4 text-center">
+                                <div class="stat-box">
+                                    <div class="stat-number text-primary" id="uploadedCount">0</div>
+                                    <div class="stat-label">مرفوعة</div>
+                                </div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="stat-box">
+                                    <div class="stat-number text-success" id="scannedCount">0</div>
+                                    <div class="stat-label">ممسوحة</div>
+                                </div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="stat-box">
+                                    <div class="stat-number text-info" id="totalCount">0</div>
+                                    <div class="stat-label">المجموع</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- أزرار الحفظ -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <button type="submit" class="btn btn-success btn-lg me-3">
+                            <i class="fas fa-save me-2"></i>حفظ العميل
+                        </button>
+                        <a href="{{ url_for('customer.index') }}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>إلغاء
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- حقل مخفي للوثائق -->
+        <input type="hidden" name="documents_data" id="documentsData" value="">
+    </form>
+</div>
+
+<!-- Modal للمسح الضوئي -->
+<div class="modal fade" id="scannerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-scanner me-2"></i>الماسح الضوئي
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div id="scannerInterface">
+                        <div class="scanner-preview mb-3">
+                            <div class="scanner-area border rounded p-4">
+                                <i class="fas fa-scanner fa-4x text-muted mb-3"></i>
+                                <h5>جاهز للمسح</h5>
+                                <p class="text-muted">ضع الوثيقة في الماسح واضغط مسح</p>
+                            </div>
+                        </div>
+                        
+                        <div class="scanner-controls">
+                            <button type="button" class="btn btn-primary btn-lg me-2" id="startScanBtn">
+                                <i class="fas fa-play me-2"></i>بدء المسح
+                            </button>
+                            <button type="button" class="btn btn-success btn-lg me-2" id="addPageBtn" style="display: none;">
+                                <i class="fas fa-plus me-2"></i>إضافة صفحة
+                            </button>
+                            <button type="button" class="btn btn-info btn-lg" id="finishScanBtn" style="display: none;">
+                                <i class="fas fa-check me-2"></i>إنهاء المسح
+                            </button>
+                        </div>
+                        
+                        <div id="scannedPages" class="scanned-pages mt-3" style="display: none;">
+                            <h6>الصفحات الممسوحة:</h6>
+                            <div class="row" id="pagesPreview"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لمعاينة الوثائق -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>معاينة الوثيقة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent" class="text-center">
+                    <!-- محتوى المعاينة -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="printDocBtn">
+                    <i class="fas fa-print me-1"></i>طباعة
+                </button>
+                <button type="button" class="btn btn-danger" id="deleteDocBtn">
+                    <i class="fas fa-trash me-1"></i>حذف
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-area {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd !important;
+}
+
+.upload-area.dragover {
+    background-color: #e3f2fd;
+    border-color: #2196f3 !important;
+}
+
+.documents-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.document-item {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.document-item:hover {
+    background: #e9ecef;
+}
+
+.document-info {
+    flex-grow: 1;
+}
+
+.document-name {
+    font-weight: bold;
+    color: #495057;
+}
+
+.document-details {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.document-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.stat-box {
+    padding: 10px;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.scanner-area {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.scanned-page {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.scanned-page img {
+    max-width: 100%;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+}
+
+.page-controls {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.page-controls button {
+    margin: 0 2px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+}
+
+.required::after {
+    content: " *";
+    color: red;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Simplified Document Management System ---
+
+    // DOM Elements
+    const customerForm = document.getElementById('customerForm');
+    const uploadArea = document.getElementById('uploadArea');
+    const documentFilesInput = document.getElementById('documentFiles');
+    const documentsList = document.getElementById('documentsList');
+    const documentsDataInput = document.getElementById('documentsData');
+    const uploadFilesBtn = document.getElementById('uploadFilesBtn');
+    const printerScanBtn = document.getElementById('printerScanBtn');
+    const previewModalElement = document.getElementById('previewModal');
+    const previewContent = document.getElementById('previewContent');
+    const printDocBtn = document.getElementById('printDocBtn');
+    const deleteDocBtn = document.getElementById('deleteDocBtn');
+    
+    // Stats
+    const uploadedCountEl = document.getElementById('uploadedCount');
+    const scannedCountEl = document.getElementById('scannedCount');
+    const totalCountEl = document.getElementById('totalCount');
+
+    // State
+    let documentsData = [];
+    let currentPreviewId = null;
+    const previewModal = new bootstrap.Modal(previewModalElement);
+
+    // --- Core Functions ---
+
+    const triggerFileInput = (source) => {
+        // Set a property on the input to know the source
+        documentFilesInput.dataset.source = source; 
+        documentFilesInput.click();
+    };
+
+    const handleFiles = (files, source) => {
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const doc = {
+                    id: Date.now() + Math.random(),
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: e.target.result,
+                    source: source // 'upload' or 'scan'
+                };
+                documentsData.push(doc);
+                render();
+            };
+            reader.readAsDataURL(file);
+        });
+        // Reset file input to allow selecting the same file again
+        documentFilesInput.value = '';
+    };
+
+    const removeDocument = (id) => {
+        documentsData = documentsData.filter(d => d.id !== id);
+        render();
+    };
+
+    const previewDocument = (id) => {
+        const doc = documentsData.find(d => d.id === id);
+        if (!doc) return;
+
+        currentPreviewId = id;
+
+        if (doc.type.startsWith('image/')) {
+            previewContent.innerHTML = `<img src="${doc.data}" class="img-fluid" alt="${doc.name}">`;
+        } else if (doc.type === 'application/pdf') {
+             previewContent.innerHTML = `<iframe src="${doc.data}" style="width:100%; height:70vh;" frameborder="0"></iframe>`;
+        } else {
+            previewContent.innerHTML = `
+                <div class="text-center p-5">
+                    <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                    <h5>${doc.name}</h5>
+                    <p class="text-muted">لا تتوفر معاينة لهذا النوع من الملفات.</p>
+                </div>`;
+        }
+        previewModal.show();
+    };
+
+    // --- Rendering & UI Updates ---
+
+    const render = () => {
+        updateDocumentsList();
+        updateStats();
+        updateFormData();
+    };
+
+    const updateDocumentsList = () => {
+        documentsList.innerHTML = '';
+        if (documentsData.length === 0) {
+            documentsList.innerHTML = '<p class="text-center text-muted">لم تتم إضافة أي وثائق بعد.</p>';
+            return;
+        }
+
+        documentsData.forEach(doc => {
+            const isScan = doc.source === 'scan';
+            const icon = isScan ? 'fa-scanner' : 'fa-upload';
+            const sourceText = isScan ? 'ممسوح' : 'مرفوع';
+            const badgeColor = isScan ? 'bg-success' : 'bg-primary';
+
+            const docElement = document.createElement('div');
+            docElement.className = 'document-item';
+            docElement.innerHTML = `
+                <div class="document-info d-flex align-items-center">
+                     <i class="fas ${icon} me-3 text-muted"></i>
+                    <div>
+                        <div class="document-name">${doc.name}</div>
+                        <div class="document-details">
+                            <span class="badge ${badgeColor} me-2">${sourceText}</span>
+                            <span>${formatFileSize(doc.size)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="document-actions">
+                    <button type="button" class="btn btn-sm btn-outline-primary preview-btn" data-id="${doc.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-id="${doc.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>`;
+            documentsList.appendChild(docElement);
+        });
+    };
+
+    const updateStats = () => {
+        const uploaded = documentsData.filter(d => d.source === 'upload').length;
+        const scanned = documentsData.filter(d => d.source === 'scan').length;
+        uploadedCountEl.textContent = uploaded;
+        scannedCountEl.textContent = scanned;
+        totalCountEl.textContent = documentsData.length;
+    };
+
+    const updateFormData = () => {
+        documentsDataInput.value = JSON.stringify(documentsData.map(d => ({
+            name: d.name,
+            type: d.type,
+            size: d.size,
+            data: d.data,
+            source: d.source
+        })));
+    };
+
+    // --- Event Listeners ---
+
+    uploadFilesBtn.addEventListener('click', () => triggerFileInput('upload'));
+    printerScanBtn.addEventListener('click', () => triggerFileInput('scan'));
+    
+    uploadArea.addEventListener('click', () => triggerFileInput('upload'));
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files, 'upload');
+    });
+
+    documentFilesInput.addEventListener('change', (e) => {
+        const source = e.target.dataset.source || 'upload';
+        if (e.target.files.length > 0) {
+            handleFiles(e.target.files, source);
+        }
+    });
+
+    documentsList.addEventListener('click', (e) => {
+        const previewBtn = e.target.closest('.preview-btn');
+        if (previewBtn) {
+            previewDocument(parseFloat(previewBtn.dataset.id));
+            return;
+        }
+        const removeBtn = e.target.closest('.remove-btn');
+        if (removeBtn) {
+            removeDocument(parseFloat(removeBtn.dataset.id));
+            return;
+        }
+    });
+    
+    deleteDocBtn.addEventListener('click', () => {
+        if (currentPreviewId) {
+            removeDocument(currentPreviewId);
+            previewModal.hide();
+        }
+    });
+
+    customerForm.addEventListener('submit', (e) => {
+        const name = customerForm.querySelector('input[name="name"]').value.trim();
+        const idNumber = customerForm.querySelector('input[name="id_number"]').value.trim();
+        
+        if (!name || !idNumber) {
+            e.preventDefault();
+            alert('يرجى التأكد من إدخال اسم العميل ورقم الهوية.');
+            return;
+        }
+        updateFormData();
+    });
+
+    // --- Utility Functions ---
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    // Initial Render
+    render();
+    
+    // Handle nationality selection
+    const nationalitySelect = document.getElementById('nationality');
+    const nationalityOtherField = document.getElementById('nationality_other_field');
+    
+    if (nationalitySelect && nationalityOtherField) {
+        nationalitySelect.addEventListener('change', function() {
+            if (this.value === 'أخرى') {
+                nationalityOtherField.style.display = 'block';
+            } else {
+                nationalityOtherField.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+<!-- The scanner.js script is no longer needed and has been removed. -->
+
+{% endblock %}
